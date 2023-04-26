@@ -1,18 +1,21 @@
-<aside id="sidebar">
-A
+<aside class="sidebar">
+why no color
 </aside>
 
-<div id="content">
-    <slot />
+<div class="content">
+    <main>
+        <slot />
+    </main>
 </div>
 
 
 <style>
-    #sidebar {
-        background-color: gray;
+    .sidebar {
+        background-color: #1E1E20;
+        color: #EEE;
         position: fixed;
         height: 100%;
-        width: auto;
+        width: 70px;
     }
 </style>
 
