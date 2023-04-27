@@ -1,18 +1,15 @@
-<aside class="sidebar bg-neutral-950 h-full text-">
-why no color
-</aside>
-
+<Navbar />
 <div class="content">
     <main>
         <slot />
     </main>
 </div>
 
-
 <style>
     .sidebar {
         color: #EEE;
         position: fixed;
+        height: 100%;
         width: 70px;
     }
 </style>
@@ -20,5 +17,6 @@ why no color
 <script>
     let sidebar = document.querySelector('#sidebar')
     console.log(sidebar) //logs null
-    import '../app.css'
+    import '../app.css';
+    import Navbar from "../components/Navbar.svelte";
 </script>
