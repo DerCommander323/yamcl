@@ -1,6 +1,6 @@
 <aside 
     style="background-color:var(--bg-secondary);" 
-    class="w-14 hover:w-36 left-0 top-0 py-4 items-center flex flex-col absolute h-screen text-white ease-in-out duration-150 p-1"
+    class="left-0 top-0 py-4 items-center flex flex-col absolute h-screen text-white ease-in-out duration-150 p-1 {expanded ? "w-36" : "w-14"}"
     >
     <button 
         class="w-full rounded-md p-2 hover:bg-purple-700 duration-200 fill-white hover:fill-black" on:mouseover={handleButtonHover} on:mouseout={handleButtonOut} on:focus={handleButtonHover} on:blur={handleButtonOut}>
@@ -15,13 +15,13 @@
 <script>
     import '../app.css'
 
-    let color = "white";
+    let expanded = false;
 
     function handleButtonHover() {
-        color = "black"
+        expanded = true
     }
     function handleButtonOut() {
-        color = "white"
+        expanded = false
     }
 
 </script>
