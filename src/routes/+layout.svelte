@@ -1,4 +1,4 @@
-<aside class="sidebar">
+<aside class="sidebar bg-neutral-950 h-full text-">
 why no color
 </aside>
 
@@ -11,10 +11,8 @@ why no color
 
 <style>
     .sidebar {
-        background-color: #1E1E20;
         color: #EEE;
         position: fixed;
-        height: 100%;
         width: 70px;
     }
 </style>
@@ -22,4 +20,5 @@ why no color
 <script>
     let sidebar = document.querySelector('#sidebar')
     console.log(sidebar) //logs null
+    import '../app.css'
 </script>
