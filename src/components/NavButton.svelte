@@ -7,10 +7,8 @@
 </script>
 
 <div class="w-full cursor-pointer rounded-md p-2 hover:bg-purple-700 duration-200 fill-white hover:fill-black">
-    <a href="{href}" class="fill-inherit">
+    <a href="{href}" class="fill-inherit inline-flex font-medium text-lg">
         <slot /> 
-        {#if show}
-        {text}
-        {/if}
+        <p class="m-0.5 ml-2 duration-150 {show ? "opacity-100" : "opacity-0"}">{text}</p>
     </a>
 </div>
