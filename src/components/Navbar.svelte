@@ -5,15 +5,15 @@
 
     <div class="w-full h-auto" on:mouseover={handleButtonHover} on:mouseout={handleButtonOut} on:focus={handleButtonHover} on:blur={handleButtonOut}>
         <NavButton text="Home" show={expanded}>
-            <FaHome />
+            <IconHome />
         </NavButton>
 
         <NavButton text="Settings" show={expanded}>
-            <FaCog />
+            <IconSettings />
         </NavButton>
 
         <NavButton text="Create" show={expanded}>
-            <IoIosAddCircle />
+            <IconCreate />
         </NavButton>
     </div>
      
@@ -23,9 +23,10 @@
 <script>
     import '../app.css'
     import NavButton from './NavButton.svelte'
-    import IoIosAddCircle from 'svelte-icons/io/IoIosAddCircle.svelte'
-    import FaCog from 'svelte-icons/fa/FaCog.svelte'
-    import FaHome from 'svelte-icons/fa/FaHome.svelte'
+
+    import IconHome from 'svelte-icons/ti/TiHome.svelte'
+    import IconSettings from 'svelte-icons/md/MdSettings.svelte'
+    import IconCreate from 'svelte-icons/md/MdAdd.svelte'
 
     let expanded = false
 

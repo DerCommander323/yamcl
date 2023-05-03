@@ -11,6 +11,6 @@
         <div class="h-[32px] w-[32px]">
             <slot />
         </div> 
-        <p class="m-0.5 ml-2 duration-200 {show ? "opacity-100" : "opacity-0"}">{#if show}{text}{/if}</p>
+        <p class="m-0.5 ml-2 duration-50 {show ? "opacity-100" : "opacity-0"}">{#if show}{text}{/if}</p>
     </a>
 </div>
