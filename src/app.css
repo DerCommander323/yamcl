@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 :root {
+    --bg-main: #060606;
+    --bg-secondary: #111214;
+/* 
     --bg-main: #1E1E20;
     --bg-secondary: #252529;
+*/
 }

@@ -4,15 +4,15 @@
     >
 
     <div class="w-full h-auto" on:mouseover={handleButtonHover} on:mouseout={handleButtonOut} on:focus={handleButtonHover} on:blur={handleButtonOut}>
-        <NavButton text="Home" show={expanded}>
+        <NavButton text="Home" href="/home" show={expanded}>
             <IconHome />
         </NavButton>
 
-        <NavButton text="Settings" show={expanded}>
+        <NavButton text="Settings" href="/settings" show={expanded}>
             <IconSettings />
         </NavButton>
 
-        <NavButton text="Create" show={expanded}>
+        <NavButton text="Create" href="/create" show={expanded}>
             <IconCreate />
         </NavButton>
     </div>
