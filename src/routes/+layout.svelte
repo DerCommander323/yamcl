@@ -1,5 +1,5 @@
 
-<div class="flex flex-row ml-[56px] bg-[var(--bg-main)] text-white h-screen">
+<div class="flex flex-col ml-[56px] bg-[var(--bg-main)] text-white h-screen">
     <Navbar />
     <slot />
 </div>
