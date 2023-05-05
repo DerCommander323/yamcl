@@ -28,6 +28,7 @@ let
     appimagekit
     cargo-tauri
     nodePackages.pnpm
+    nodejs
   ];
 in
 pkgs.mkShell {

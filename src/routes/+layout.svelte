@@ -1,8 +1,7 @@
-<Navbar />
-<div class="content ml-[56px] bg-[var(--bg-main)] text-white h-screen">
-    <main>
-        <slot />
-    </main>
+
+<div class="flex flex-row ml-[56px] bg-[var(--bg-main)] text-white h-screen">
+    <Navbar />
+    <slot />
 </div>
 
 
