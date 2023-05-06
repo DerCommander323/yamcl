@@ -3,7 +3,7 @@
 <div class="m-3 p-2 bg-[var(--bg-secondary)] rounded-xl text-lg">
     <div on:click={setInstancePath} on:keypress={setInstancePath} class="cursor-pointer">
         <p>Path of the Instance Folder</p>
-        <p class="m-1 p-0.5 rounded-md bg-[#222]">{settings.instancePath}</p>
+        <p class="m-1 p-0.5 rounded-md bg-[#222]">{ settings.instancePath?? 'Click to set!' }</p>
     </div>
 </div>
 
@@ -14,12 +14,8 @@
     let settings = {}
     readSettings().then(data => {settings=data})
 
-    //TODO: Add a way for the user to select the instance folder
     import { pickDir } from './folder_selector'
     import { readSettings, writeSettings } from './filesystem'
-
-    settings.instancePath = 'a'
-    if (settings.instancePath==null) settings.instancePath = 'Click to set!'
 
     function setInstancePath() {
         pickDir().then(p => {
@@ -31,7 +27,7 @@
 
     // @ts-ignore
     function updateSettings() {
-        writeSettings(settings)
+        if(settings) writeSettings(settings)
     }
 
     readSettings()
