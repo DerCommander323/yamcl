@@ -18,6 +18,22 @@
         "message": true,
         "open": true,
         "save": true 
+      },
+      "fs": {
+        "scope": ["$APPCONFIG/*"],
+        "all": true,
+        "readFile": true,
+        "writeFile": true,
+        "readDir": true,
+        "copyFile": true,
+        "createDir": true,
+        "removeDir": true,
+        "removeFile": true,
+        "renameFile": true,
+        "exists": true
+      },
+      "path": {
+        "all": true
       }
     },
     "bundle": {
@@ -35,7 +51,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "yamcl",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
