@@ -38,5 +38,4 @@
         expanded = false
     }
 
-    //on:mouseover={handleButtonHover} on:mouseout={handleButtonOut} on:focus={handleButtonHover} on:blur={handleButtonOut}
 </script>
