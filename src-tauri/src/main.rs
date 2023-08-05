@@ -1,5 +1,5 @@
 use std::{fs::{self, ReadDir, DirEntry}, ffi::OsString};
-
+mod instances;
 
 fn main() {
     tauri::Builder::default()
