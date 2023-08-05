@@ -35,4 +35,6 @@ fn get_instance_name_mmc(dir: ReadDir) {
             
         }
     }
+
+    println!("{}", name.replace("name=", ""))
 }
