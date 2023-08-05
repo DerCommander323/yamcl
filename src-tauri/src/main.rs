@@ -40,5 +40,5 @@ fn handle_instance_cf(dir: DirEntry) {
 
 fn handle_instance_mmc(dir: DirEntry) {
     println!("{:?} is a MultiMC instance!", dir.file_name());
-
+    instances::get_instance_name_mmc(dir)
 }

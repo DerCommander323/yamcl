@@ -1,8 +1,5 @@
 use std::fs::DirEntry;
-use std::fs::File;
 use std::fs::read_to_string;
-use std::io::BufRead;
-use std::io::BufReader;
 
 use configparser::ini::Ini;
 use serde_json::Value;
@@ -16,25 +13,12 @@ pub fn get_instance_name_cf(dir: DirEntry) {
     println!("{}", name);
 }
 
-fn get_instance_name_mmc(dir: DirEntry) {
-    // let mut reader = BufReader::new(File::open(dir.path().join("instance.cfg")).expect("Cannot read"));
-    // let mut buf = String::new();
-    let mut name = String::new();
-    // reader.read_line(&mut buf);
-    // match buf.as_ref() {
-    //     "[General]" => { name = reader.lines().nth(32).unwrap().unwrap();},
-    //     _ => { name = reader.lines().nth(31).unwrap().unwrap();}
-    // }
+pub fn get_instance_name_mmc(dir: DirEntry) {
+    let mut data = read_to_string(dir.path().join("instance.cfg")).unwrap();
+    data = data.replace("[General]", "");
 
-    let data = read_to_string(dir.path().join("instance.cfg")).unwrap();
-    let mut contents = Ini::new();
-    contents.read(data);
-    
-    if contents.sections().contains(&"General".to_string()) {
-        name = contents.get("General", "name").unwrap();
-    } else {
-        name = contents.get("default", "name").unwrap();
-    }
+    let mut config = Ini::new();
+    config.read(data);
 
-    println!("{}", name.replace("name=", ""))
+    println!("{}", config.get("default","name").unwrap());
 }
