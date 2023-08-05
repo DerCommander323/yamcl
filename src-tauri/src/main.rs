@@ -1,4 +1,4 @@
-use std::{fs::{self}, ffi::OsString};
+use std::{fs::{self, ReadDir, DirEntry}, ffi::OsString};
 
 
 fn main() {
@@ -23,8 +23,8 @@ fn get_instances(path: String) {
 
             for file in instance_contents {
                 match file.unwrap().file_name().into_string().unwrap().as_ref() {
-                    ".curseclient" => {handle_instance_curseforge(instance_folder.file_name()); break;},
-                    "instance.cfg" => {handle_instance_multimc(instance_folder.file_name()); break;},
+                    "minecraftinstance.json" => {handle_instance_cf(instance_folder); break;},
+                    "instance.cfg" => {handle_instance_mmc(instance_folder); break;},
                     _ => continue
                 }   
             }
@@ -32,10 +32,12 @@ fn get_instances(path: String) {
     }
 }
 
-fn handle_instance_curseforge(dir: OsString) {
-    println!("{:?} is a CurseForge instance!", dir)
+fn handle_instance_cf(dir: DirEntry) {
+    println!("{:?} is a CurseForge instance!", dir.file_name());
+
 }
 
-fn handle_instance_multimc(dir: OsString) {
-    println!("{:?} is a MultiMC instance!", dir)
+fn handle_instance_mmc(dir: DirEntry) {
+    println!("{:?} is a MultiMC instance!", dir.file_name());
+
 }
