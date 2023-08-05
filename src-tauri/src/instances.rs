@@ -1,4 +1,5 @@
 use std::fs::DirEntry;
+use std::fs::File;
 use std::fs::ReadDir;
 use std::fs::read_to_string;
 use std::io::BufRead;
@@ -13,22 +14,17 @@ pub fn get_instance_name_cf(dir: DirEntry) {
     println!("{}", name);
 }
 
-fn get_instance_name_mmc(dir: ReadDir) {
-    let mut reader: BufReader<std::fs::File>;
+fn get_instance_name_mmc(dir: DirEntry) {
+    let mut reader = BufReader::new(File::open(dir.path().join("instance.cfg")).unwrap());
+    let mut buf = String::new();
     let mut name = String::new();
-
-    for file in dir {
-        if file.as_ref().unwrap().file_name() == "instance.cfg" {
-            reader = BufReader::new(std::fs::File::open(file.unwrap().path()).unwrap());
-            let mut lines = reader.lines();
-            if lines.nth(0).unwrap().unwrap() == "[General]".to_string() {
-                name = lines.nth(32).unwrap().unwrap()
-            } else {
-                name = lines.nth(31).unwrap().unwrap()
-            }
-            
-        }
+    reader.read_line(&mut buf);
+    match buf.as_ref() {
+        "[General]" => { name = reader.lines().nth(32).unwrap().unwrap();},
+        _ => { name = reader.lines().nth(31).unwrap().unwrap();}
     }
+
+
 
     println!("{}", name.replace("name=", ""))
 }
