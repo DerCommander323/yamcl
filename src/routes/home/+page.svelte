@@ -6,21 +6,15 @@
 // @ts-nocheck
 
     import { invoke } from "@tauri-apps/api/tauri";
-    import { getSettings } from "../../scripts/settings";
+    import { getSetting } from "../../scripts/settings";
 
     async function init() {
-        let settings = await getSettings();
-        let instances = document.getElementById("instances");
+        let instancePath = await getSetting('instancePath')
+        let instances = document.getElementById('instances');
 
-        console.log(settings);
         
-        if (settings.instancePath!=null) {
-            invoke('my_custom_command', { path: settings.instancePath }).then(data => {
-                console.log(data)
-                let p = document.createElement('p')
-                p.innerText=data
-                instances.append(p)
-            })
+        if (instancePath!=null) {
+            invoke('get_instances', {path: instancePath})
         }
         
     }
