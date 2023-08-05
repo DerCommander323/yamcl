@@ -1,4 +1,4 @@
-use std::{fs::{self, ReadDir}, ffi::OsStr};
+use std::{fs::{self}, ffi::OsString};
 
 
 fn main() {
@@ -20,36 +20,22 @@ fn get_instances(path: String) {
             let instance_folder = path.unwrap();
 
             let instance_contents = fs::read_dir(instance_folder.path()).unwrap();
-            /*
-            if instance_contents.into_iter().any(|f| f.unwrap().file_name() == OsStr::new("instance.cfg"))  {
-                println!("{:?} is a MultiMC instance", instance_folder.file_name())
-            } else {
-                println!("{:?} is not a MultiMC instance", instance_folder.file_name());
-            }
-            */
-            if contains_file(&instance_contents, "instance.cfg") {
-                println!("A: {:?} is a MultiMC instance", instance_folder.file_name())
-            } else if contains_file(&instance_contents, ".curseclient") {
-                println!("B: {:?} is a CurseForge instance", instance_folder.file_name())
-            } else {
-                println!("C: {:?} is not a MC instance", instance_folder.file_name())
-            }
-            
 
-            /*
-            for instance_files in instance_contents {
-                println!(" -Contents: {:?}", instance_files.unwrap().file_name())
+            for file in instance_contents {
+                match file.unwrap().file_name().into_string().unwrap().as_ref() {
+                    ".curseclient" => {handle_instance_curseforge(instance_folder.file_name()); break;},
+                    "instance.cfg" => {handle_instance_multimc(instance_folder.file_name()); break;},
+                    _ => continue
+                }   
             }
-            */
         }
     }
-
 }
 
-fn contains_file(dir: &ReadDir, file: &str) -> bool {
-    let mut ret = false;
-    dir.for_each(|e| if e.unwrap().file_name() == OsStr::new(file) {ret = true;});
-    ret
+fn handle_instance_curseforge(dir: OsString) {
+    println!("{:?} is a CurseForge instance!", dir)
+}
 
-    //dir.any(|f| f.unwrap().file_name() == OsStr::new(file))
+fn handle_instance_multimc(dir: OsString) {
+    println!("{:?} is a MultiMC instance!", dir)
 }
