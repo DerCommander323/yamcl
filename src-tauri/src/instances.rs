@@ -17,7 +17,7 @@ pub fn get_instance_name_cf(dir: DirEntry) {
 }
 
 fn get_instance_name_mmc(dir: DirEntry) {
-    let mut reader = BufReader::new(File::open(dir.path().join("instance.cfg")).unwrap());
+    let mut reader = BufReader::new(File::open(dir.path().join("instance.cfg")).expect("Cannot read").unwrap());
     let mut buf = String::new();
     let mut name = String::new();
     reader.read_line(&mut buf);
