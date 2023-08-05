@@ -33,12 +33,9 @@ fn get_instances(path: String) {
 }
 
 fn handle_instance_cf(dir: DirEntry) {
-    println!("{:?} is a CurseForge instance!", dir.file_name());
-    instances::get_instance_name_cf(dir)
-
+    println!("A: {:?} is a CurseForge instance with name {}", dir.file_name(), instances::get_instance_name_cf(dir));
 }
 
 fn handle_instance_mmc(dir: DirEntry) {
-    println!("{:?} is a MultiMC instance!", dir.file_name());
-    instances::get_instance_name_mmc(dir)
+    println!("B: {:?} is a MultiMC instance with name {}", dir.file_name(), instances::get_instance_name_mmc(dir));
 }
