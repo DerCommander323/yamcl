@@ -13,7 +13,7 @@ let
   ];
 
   packages = with pkgs; [
-    latest.rustChannels.nightly.rust
+    latest.rustChannels.stable.rust
     cargo
     rustc
     rustfmt
@@ -29,6 +29,8 @@ let
     cargo-tauri
     nodePackages.pnpm
     nodejs
+    git
+    vscode
   ];
 in
 pkgs.mkShell {
