@@ -5,10 +5,12 @@ use std::fs::read_to_string;
 use std::io::BufRead;
 use std::io::BufReader;
 
+use serde_json::Value;
+
 
 pub fn get_instance_name_cf(dir: DirEntry) {
     let data = read_to_string(dir.path().join("minecraftinstance.json")).unwrap();
-    let json = serde_json::json!(data);
+    let json: Value = serde_json::from_str(&data).unwrap();
     let name = json["name"].as_str().unwrap_or("Name not found!");
 
     println!("{}", name);
