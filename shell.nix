@@ -14,7 +14,7 @@ let
 
   packages = with pkgs; [
     latest.rustChannels.stable.rust
-    cargo
+    latest.rustChannels.stable.rust-src
     rustc
     rustfmt
     cmake
@@ -31,6 +31,8 @@ let
     nodejs
     git
     vscode
+    rust-analyzer
+    
   ];
 in
 pkgs.mkShell {
@@ -39,5 +41,7 @@ pkgs.mkShell {
   shellHook =
     ''
       export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath libraries}:$LD_LIBRARY_PATH
+      export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+
     '';
 }
