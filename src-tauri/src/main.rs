@@ -1,4 +1,4 @@
-use std::{fs::{self, ReadDir, DirEntry}, ffi::OsString};
+use std::fs::{self, DirEntry};
 mod instances;
 
 fn main() {
@@ -34,6 +34,7 @@ fn get_instances(path: String) {
 
 fn handle_instance_cf(dir: DirEntry) {
     println!("{:?} is a CurseForge instance!", dir.file_name());
+    instances::get_instance_name_cf(dir)
 
 }
 
