@@ -17,10 +17,10 @@ pub fn get_instance_name_cf(dir: DirEntry) {
 }
 
 fn get_instance_name_mmc(dir: DirEntry) {
-    let mut reader = BufReader::new(File::open(dir.path().join("instance.cfg")).expect("Cannot read"));
-    let mut buf = String::new();
+    // let mut reader = BufReader::new(File::open(dir.path().join("instance.cfg")).expect("Cannot read"));
+    // let mut buf = String::new();
     let mut name = String::new();
-    reader.read_line(&mut buf);
+    // reader.read_line(&mut buf);
     // match buf.as_ref() {
     //     "[General]" => { name = reader.lines().nth(32).unwrap().unwrap();},
     //     _ => { name = reader.lines().nth(31).unwrap().unwrap();}
@@ -30,9 +30,10 @@ fn get_instance_name_mmc(dir: DirEntry) {
     let mut contents = Ini::new();
     contents.read(data);
     
-    match buf.as_ref() {
-        "[General]" => { name = contents.get("General", "name").unwrap();},
-        _ => { name = contents.get("Gefault", "name").unwrap();}
+    if contents.sections().contains(&"General".to_string()) {
+        name = contents.get("General", "name").unwrap();
+    } else {
+        name = contents.get("default", "name").unwrap();
     }
 
     println!("{}", name.replace("name=", ""))
