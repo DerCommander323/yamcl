@@ -6,7 +6,7 @@
     import '../app.css'
 </script>
 
-<div class="w-full cursor-pointer rounded-md p-2 hover:bg-purple-700 duration-200 fill-white text-white">
+<div class="w-full cursor-pointer rounded-lg p-2 hover:bg-purple-700 duration-200 fill-white text-white">
     <a href="{href}" class="fill-inherit inline-flex font-medium text-lg">
         <div class="h-[32px] w-[32px]">
             <slot />
