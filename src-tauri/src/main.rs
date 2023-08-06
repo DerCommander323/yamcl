@@ -1,18 +1,23 @@
 use std::fs::{self, DirEntry};
+
+use tauri::{Manager, AppHandle};
 mod instances;
+
+#[derive(Clone, serde::Serialize)]
+struct InstanceData {
+  name: String
+}
 
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![get_instances])
         .run(tauri::generate_context!())
         .expect("failed to run app");
+        
 }
 
-
-
-#[tauri::command]
-fn get_instances(path: String) {
-
+#[tauri::command(async)]
+fn get_instances(path: String, app_handle: AppHandle) {
     let paths = fs::read_dir(path).unwrap();
 
     for path in paths {
@@ -23,8 +28,8 @@ fn get_instances(path: String) {
 
             for file in instance_contents {
                 match file.unwrap().file_name().into_string().unwrap().as_ref() {
-                    "minecraftinstance.json" => {handle_instance_cf(instance_folder); break;},
-                    "instance.cfg" => {handle_instance_mmc(instance_folder); break;},
+                    "minecraftinstance.json" => {handle_instance_cf(instance_folder, app_handle.clone()); break;},
+                    "instance.cfg" => {handle_instance_mmc(instance_folder, app_handle.clone()); break;},
                     _ => continue
                 }   
             }
@@ -32,10 +37,18 @@ fn get_instances(path: String) {
     }
 }
 
-fn handle_instance_cf(dir: DirEntry) {
-    println!("A: {:?} is a CurseForge instance with name {}", dir.file_name(), instances::get_instance_name_cf(dir));
+fn handle_instance_cf(dir: DirEntry, app_handle: AppHandle) {
+    let name = instances::get_instance_name_cf(dir);
+    println!("Curseforge: {}", &name);
+    emit_instance_create(InstanceData { name }.into(), app_handle)
 }
 
-fn handle_instance_mmc(dir: DirEntry) {
-    println!("B: {:?} is a MultiMC instance with name {}", dir.file_name(), instances::get_instance_name_mmc(dir));
+fn handle_instance_mmc(dir: DirEntry, app_handle: AppHandle) {
+    let name = instances::get_instance_name_mmc(dir);
+    println!("MultiMC: {}", &name);
+    emit_instance_create(InstanceData { name }.into(), app_handle)
+}
+
+fn emit_instance_create(data: InstanceData, app_handle: AppHandle) {
+    app_handle.emit_all("instance_create", data).unwrap()
 }

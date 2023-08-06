@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { readTextFile, writeTextFile } from '@tauri-apps/api/fs'
 import { appConfigDir } from '@tauri-apps/api/path'
 import { open } from '@tauri-apps/api/dialog'
@@ -42,6 +41,7 @@ export async function changeSetting(name, data) {
  */
 export async function getSetting(name) {
     let settings = await readSettings()
+    // @ts-ignore
     return settings[name]
 }
 

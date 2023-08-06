@@ -3,20 +3,25 @@
 <div id="instances" />
 
 <script>
-// @ts-nocheck
-
     import { invoke } from "@tauri-apps/api/tauri";
-    import { getSetting } from "../../scripts/settings";
+    import { emit, listen } from "@tauri-apps/api/event"
+
+
+    import { getSetting } from "../../scripts/settings"
 
     async function init() {
         let instancePath = await getSetting('instancePath')
         let instances = document.getElementById('instances');
 
         
+        const unlisten = await listen('instance_create', (event) => {
+            console.log(event.payload.name)
+        })
+
         if (instancePath!=null) {
-            invoke('get_instances', {path: instancePath})
+            invoke('get_instances', { path: instancePath})
         }
-        
     }
+
     init()
 </script>
