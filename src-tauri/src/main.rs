@@ -17,7 +17,6 @@ fn main() {
 #[tauri::command]
 fn unlock_icons(path: String, app_handle: AppHandle) {
     app_handle.asset_protocol_scope().allow_directory(Path::new(&path), true).unwrap();
-    println!("Is unlocked?: {}", app_handle.fs_scope().is_allowed(Path::new("/run/media/der/Storage/Games/Minecraft/Icons/modrinth_fabulously_optimized")));
 }
 
 #[tauri::command(async)]
