@@ -3,12 +3,13 @@
     import { getSetting } from '../../scripts/settings'
     import { onMount } from "svelte"
 
-    let path = 'Loading...'
+    let instancePath = 'Loading...'
+    let iconPath = 'Loading...'
 
     onMount(async () => {
-        let instancePath = await getSetting('instancePath')
         // @ts-ignore
-        path = instancePath?? 'Click to set!'
+        instancePath = await getSetting('instancePath')?? 'Click to set!'
+        iconPath = await getSetting('iconPath')?? 'Click to set!'
     })
 
     async function setInstancePath() {
@@ -20,16 +21,35 @@
 
         if(dir==null) return
         changeSetting('instancePath',dir)
-        path = dir
+        instancePath = dir
     }
+    async function setIconPath() {
+        /**
+         * @type String
+        */
+        //@ts-ignore
+        let dir = await pickDir()
+
+        if(dir==null) return
+        changeSetting('iconPath',dir)
+        iconPath = dir
+    }
+
+    
 </script>
 
 <h1 class="text-[20px] font-bold underline ml-2 mt-2">Settings</h1>
 
-<div class="m-3 p-2 bg-[var(--bg-secondary)] rounded-lg text-lg border border-[var(--bg-secondary)] hover:border-purple-700 duration-150">
+<div class="m-3 mb-1 p-2 bg-[var(--bg-secondary)] rounded-lg text-lg border border-[var(--bg-secondary)] hover:border-purple-700 duration-150">
     <div on:click={setInstancePath} on:keypress={setInstancePath} class="cursor-pointer">
         <p>Path of the Instance Folder</p>
-        <p class="m-1 p-0.5 px-1.5 rounded-md bg-[#222]">{ path }</p>
+        <p class="m-1 p-0.5 px-1.5 rounded-md bg-[#222]">{ instancePath }</p>
+    </div>
+</div>
+<div class="m-3 mt-1 p-2 bg-[var(--bg-secondary)] rounded-lg text-lg border border-[var(--bg-secondary)] hover:border-purple-700 duration-150">
+    <div on:click={setIconPath} on:keypress={setIconPath} class="cursor-pointer">
+        <p>Path of the Icon Folder</p>
+        <p class="m-1 p-0.5 px-1.5 rounded-md bg-[#222]">{ iconPath }</p>
     </div>
 </div>
 

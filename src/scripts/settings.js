@@ -53,6 +53,7 @@ export async function pickDir() {
     const selected = await open({
         directory: true,
         multiple: false,
+        recursive: true
     })
     return selected
 }
