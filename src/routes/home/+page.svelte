@@ -15,6 +15,7 @@
 
     import { getSetting } from "../../scripts/settings"
     import InstanceTile from "../../components/InstanceTile.svelte";
+  import { json } from "@sveltejs/kit";
 
 
     /**
@@ -38,10 +39,21 @@
         invoke('unlock_icons', { path: iconPath })
         
         unlisten = await listen('instance_create', async (event) => {
-            switch (event.payload.icon) {
-                case "": event.payload.icon = null; break;
-                case "default": break;
-                default: event.payload.icon = convertFileSrc(await join(iconPath, event.payload.icon)); break;
+            if(event.payload.icon=='' || event.payload.icon=='default') {
+                event.payload.icon = null
+            } else if(event.payload.icon.startsWith("https://media.forgecdn.net")) {
+                //do nothing
+            } else if(event.payload.icon == 'curse:666') {
+                event.payload.icon = null
+            } else if(event.payload.icon.startsWith('curse:') && event.payload.icon != 'curse:666') {
+                let apiReqeust = await fetch(`https://curserinth-api.kuylar.dev/v2/project/${event.payload.icon.split(':')[1]}`)
+                console.log(`Fetching Icon for project ID ${event.payload.icon.split(':')[1]} from CurseRinth...`)
+                apiReqeust.json().then(json => {
+                    console.log(json.icon_url)
+                    event.payload.icon = json.icon_url
+                })
+            } else {
+                event.payload.icon = convertFileSrc(await join(iconPath, event.payload.icon))
             }
             // @ts-ignore
             instanceList = [...instanceList, event.payload]

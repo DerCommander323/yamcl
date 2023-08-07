@@ -16,9 +16,13 @@ pub fn handle_instance_cf(dir: DirEntry, app_handle: AppHandle) {
     let data = read_to_string(dir.path().join("minecraftinstance.json")).unwrap();
     let json: Value = serde_json::from_str(&data).unwrap();
     let name = json["name"].as_str().unwrap_or("Name not found!").to_string();
+    let mut icon = json["installedModpack"]["thumbnailUrl"].as_str().unwrap_or("").to_string();
+    if icon.is_empty() {
+        icon = "curse:".to_owned()+&json["installedModpack"]["addonID"].as_u64().unwrap_or(666).to_string()
+    }
 
-    println!("Curseforge: {}", &name);
-    emit_instance_create(InstanceData { name, icon: "".to_string() }.into(), app_handle)
+    println!("Curseforge: {}, Icon: {}", &name, &icon);
+    emit_instance_create(InstanceData { name, icon }.into(), app_handle)
 }
 
 pub fn handle_instance_mmc(dir: DirEntry, app_handle: AppHandle) {
