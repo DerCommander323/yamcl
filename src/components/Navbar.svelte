@@ -1,6 +1,6 @@
 <aside 
-    style="background-color:var(--bg-secondary);" 
-    class="z-20 left-0 top-0 py-4 items-center flex flex-col fixed h-screen text-white ease-in-out duration-150 p-1 {expanded ? "w-36" : "w-14"}"
+    class="z-20 bg-[var(--bg-secondary)] left-0 top-0 py-4 items-center flex flex-col fixed h-screen text-white ease-in-out duration-150 p-1 
+        border-[var(--bg-tertiary)] border-r {expanded ? "w-36" : "w-14"}"
     >
 
     <div class="w-full h-auto" on:mouseover={handleButtonHover} on:mouseout={handleButtonOut} on:focus={handleButtonHover} on:blur={handleButtonOut}>

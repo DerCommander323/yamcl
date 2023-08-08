@@ -1,8 +1,8 @@
-<h1 class="text-[20px] font-bold underline ml-2 mt-2">Instances</h1>
+<Topbar text="Instances"> amog </Topbar>
 <div id="instanceContainer" class="h-fit bg-black">
     <ol id="instances" class="grid">
         {#each instanceList as instance}
-            <InstanceTile name={instance.name} icon={instance.icon?? "src/components/default_instance.png"}></InstanceTile>
+            <InstanceTile name={instance.name} icon={instance.icon?? "src/assets/default_instance.png"}></InstanceTile>
         {/each}
     </ol>
 </div>
@@ -15,6 +15,7 @@
 
     import { getSetting } from "../../scripts/settings"
     import InstanceTile from "../../components/InstanceTile.svelte"
+    import Topbar from "../../components/Topbar.svelte"
 
     const prismIcons = [
         'default', 'bee', 'brick', 'chicken', 'creeper', 'diamond', 'dirt', 'enderman', 'enderpearl', 'flame', 'fox', 'gear', 'herobrine',

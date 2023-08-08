@@ -3,10 +3,17 @@
 @tailwind utilities;
 
 :root {
+    font-family: 'Inter', sans-serif;
     --bg-main: #060606;
     --bg-secondary: #111214;
+    --bg-tertiary: #171718;
 /* 
     --bg-main: #1E1E20;
     --bg-secondary: #252529;
 */
+}
+
+@font-face {
+    font-family: Inter;
+    src: "assets/Inter-VariableFont_slnt\,wght.ttf";
 }

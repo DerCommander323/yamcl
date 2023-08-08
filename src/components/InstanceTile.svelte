@@ -21,8 +21,8 @@
     </div>
     
     <button 
-    class="bg-purple-700 rounded-b-md absolute bottom-0 font-bold hover:underline
-        {hover ? "w-full text-xl p-1" : "text-[0px] h-0"}"
+    class="rounded-b-md absolute bottom-0 font-medium hover:underline overflow-hidden
+        {hover ? "w-full text-xl p-1 duration-150 bg-purple-700" : "text-[0px] h-0"}"
     >
         Play
     </button>
