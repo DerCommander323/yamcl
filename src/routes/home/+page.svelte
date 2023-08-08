@@ -1,8 +1,15 @@
-<Topbar text="Instances"> amog </Topbar>
+<Topbar text="Instances">
+    <div class="py-3 w-full">
+        ({instanceList.length})
+    </div>
+    <div class="p-3">
+        <input id="instanceWidth" type="range" min="3" max="27" bind:value={instanceSize} on:change={adjustSize}>
+    </div>
+</Topbar>
 <div id="instanceContainer" class="h-fit bg-black">
     <ol id="instances" class="grid">
         {#each instanceList as instance}
-            <InstanceTile name={instance.name} icon={instance.icon?? "src/assets/default_instance.png"}></InstanceTile>
+            <InstanceTile name={instance.name} path={instance.path} icon={instance.icon?? "src/assets/default_instance.png"} />
         {/each}
     </ol>
 </div>
@@ -13,7 +20,7 @@
     import { listen } from "@tauri-apps/api/event"
     import { onMount, onDestroy } from "svelte"
 
-    import { getSetting } from "../../scripts/settings"
+    import { getSetting, changeSetting } from "../../scripts/settings"
     import InstanceTile from "../../components/InstanceTile.svelte"
     import Topbar from "../../components/Topbar.svelte"
 
@@ -31,14 +38,18 @@
      */
     let unlisten
     /**
-     * @type {[{name:"",icon:""}]}
+     * @type {[{name:"",icon:"",path:""}]}
      */
     //@ts-ignore
     let instanceList = []
+    let instanceSize = 20
 
     //Main Code goes in here
     onMount(async () => {
-        adjustSize()
+        getSetting('instanceSize').then(v => {
+            if(v) instanceSize = v
+            adjustSize()
+        })
 
         let instancePath = await getSetting('instancePath')
         let iconPath = await getSetting('iconPath')
@@ -79,13 +90,15 @@
     //Remove event listener on unload
     onDestroy(async () => {
         unlisten()
+        changeSetting('instanceSize', instanceSize)
     })
 
     //Adjust CSS Grid Columns to window width
     function adjustSize() {
-        const w = window.innerWidth-40
+        const width = window.innerWidth-40
         const e = document.getElementById('instances')
-        if (e) e.style.gridTemplateColumns = `repeat(${Math.ceil(w/250)}, minmax(0, 1fr))`
+        // @ts-ignore
+        if (e) e.style.gridTemplateColumns = `repeat(${Math.ceil((width*(30-instanceSize))/2500)}, minmax(0, 1fr))`
     }
 
     //Adjust CSS Grid Columns on resize

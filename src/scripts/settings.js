@@ -25,7 +25,7 @@ export async function writeSettings(settings) {
 /**
  * Changes a specific Setting and saves it
  * @param {String} name Name of the Setting
- * @param {String} data New Value of the Setting
+ * @param {any} data New Value of the Setting
  */
 export async function changeSetting(name, data) {
     readSettings().then(settings => {
