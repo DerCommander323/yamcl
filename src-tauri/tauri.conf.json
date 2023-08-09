@@ -20,7 +20,7 @@
         "save": true 
       },
       "fs": {
-        "scope": ["$APPCONFIG/*"],
+        "scope": ["$APPCONFIG/*","$RESOURCE/*"],
         "all": true,
         "readFile": true,
         "writeFile": true,
@@ -63,7 +63,9 @@
         "providerShortName": null,
         "signingIdentity": null
       },
-      "resources": [],
+      "resources": [
+        "../src/resources/*"
+      ],
       "shortDescription": "",
       "targets": "all",
       "windows": {
@@ -73,7 +75,7 @@
       }
     },
     "security": {
-      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost"
+      "csp": "default-src https://* tauri://* asset://*; img-src https://* tauri://* asset://* file://*; asset https://asset.localhost; style-src *"
     },
     "updater": {
       "active": false

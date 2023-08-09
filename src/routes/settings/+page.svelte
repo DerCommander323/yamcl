@@ -40,16 +40,18 @@
 
 <h1 class="text-[20px] font-bold underline ml-2 mt-2">Settings</h1>
 
-<div class="m-3 mb-1 p-2 bg-[var(--bg-secondary)] rounded-lg text-lg border border-[var(--bg-secondary)] hover:border-purple-700 duration-150">
-    <div on:click={setInstancePath} on:keypress={setInstancePath} class="cursor-pointer">
-        <p>Path of the Instance Folder</p>
-        <p class="m-1 p-0.5 px-1.5 rounded-md bg-[#222]">{ instancePath }</p>
+<div class="h-full bg-[var(--bg-primary)]">
+    <div class="m-3 mb-1 bg-[var(--bg-secondary)] p-2 rounded-lg text-lg border border-[var(--bg-secondary)] hover:border-purple-700 duration-150">
+        <div on:click={setInstancePath} on:keypress={setInstancePath} class="cursor-pointer">
+            <p>Path of the Instance Folder</p>
+            <p class="m-1 p-0.5 px-1.5 rounded-md bg-[#222]">{ instancePath }</p>
+        </div>
     </div>
-</div>
-<div class="m-3 mt-1 p-2 bg-[var(--bg-secondary)] rounded-lg text-lg border border-[var(--bg-secondary)] hover:border-purple-700 duration-150">
-    <div on:click={setIconPath} on:keypress={setIconPath} class="cursor-pointer">
-        <p>Path of the Icon Folder</p>
-        <p class="m-1 p-0.5 px-1.5 rounded-md bg-[#222]">{ iconPath }</p>
+    <div class="m-3 mt-1 bg-[var(--bg-secondary)] p-2 rounded-lg text-lg border border-[var(--bg-secondary)] hover:border-purple-700 duration-150">
+        <div on:click={setIconPath} on:keypress={setIconPath} class="cursor-pointer">
+            <p>Path of the Icon Folder</p>
+            <p class="m-1 p-0.5 px-1.5 rounded-md bg-[#222]">{ iconPath }</p>
+        </div>
     </div>
 </div>
 

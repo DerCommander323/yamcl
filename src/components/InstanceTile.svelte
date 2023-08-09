@@ -1,6 +1,6 @@
 <script>
     export let name = "Fallback Name!"
-    export let icon = "src/components/default_instance.png"
+    export let icon = "src/resources/default_instance.png"
 
     /**
      * @type {String}

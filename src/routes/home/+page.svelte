@@ -9,18 +9,18 @@
 <div id="instanceContainer" class="h-fit bg-black">
     <ol id="instances" class="grid">
         {#each instanceList as instance}
-            <InstanceTile name={instance.name} path={instance.path} icon={instance.icon?? "src/assets/default_instance.png"} />
+            <InstanceTile name={instance.name} path={instance.path} icon={instance.icon?? "src/resources/default_instance.png"} />
         {/each}
     </ol>
 </div>
 
 <script>
     import { invoke, convertFileSrc } from "@tauri-apps/api/tauri"
-    import { join } from "@tauri-apps/api/path"
+    import { join, resolveResource } from "@tauri-apps/api/path"
     import { listen } from "@tauri-apps/api/event"
     import { onMount, onDestroy } from "svelte"
 
-    import { getSetting, changeSetting } from "../../scripts/settings"
+    import { getSetting, changeSetting, readSettings } from "../../scripts/settings"
     import InstanceTile from "../../components/InstanceTile.svelte"
     import Topbar from "../../components/Topbar.svelte"
 
@@ -78,6 +78,7 @@
             } else {
                 event.payload.icon = convertFileSrc(await join(iconPath, ic))
             }
+            
             // @ts-ignore
             instanceList = [...instanceList, event.payload]
         })
@@ -105,4 +106,12 @@
     window.addEventListener('resize', () => {
         adjustSize()
     })
+
+    /*
+    window.addEventListener('keypress', key => {
+        console.log(key)
+        if(key.ctrlKey && key.shiftKey && key.code=="KeyE")
+    })
+    */
+
 </script>
