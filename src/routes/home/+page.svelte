@@ -9,18 +9,18 @@
 <div id="instanceContainer" class="h-fit bg-black">
     <ol id="instances" class="grid">
         {#each instanceList as instance}
-            <InstanceTile name={instance.name} path={instance.path} icon={instance.icon?? "src/resources/default_instance.png"} />
+            <InstanceTile name={instance.name} path={instance.path} icon={instance.icon} />
         {/each}
     </ol>
 </div>
 
 <script>
     import { invoke, convertFileSrc } from "@tauri-apps/api/tauri"
-    import { join, resolveResource } from "@tauri-apps/api/path"
+    import { join } from "@tauri-apps/api/path"
     import { listen } from "@tauri-apps/api/event"
     import { onMount, onDestroy } from "svelte"
 
-    import { getSetting, changeSetting, readSettings } from "../../scripts/settings"
+    import { getSetting, changeSetting } from "../../scripts/settings"
     import InstanceTile from "../../components/InstanceTile.svelte"
     import Topbar from "../../components/Topbar.svelte"
 
@@ -53,7 +53,6 @@
 
         let instancePath = await getSetting('instancePath')
         let iconPath = await getSetting('iconPath')
-        let instances = document.getElementById('instances')
 
         invoke('unlock_icons', { path: iconPath })
         
@@ -78,6 +77,8 @@
             } else {
                 event.payload.icon = convertFileSrc(await join(iconPath, ic))
             }
+
+            if(!event.payload.icon) event.payload.icon = 'default_instance.png'
             
             // @ts-ignore
             instanceList = [...instanceList, event.payload]

@@ -20,7 +20,7 @@
         "save": true 
       },
       "fs": {
-        "scope": ["$APPCONFIG/*","$RESOURCE/*"],
+        "scope": ["$APPCONFIG/*"],
         "all": true,
         "readFile": true,
         "writeFile": true,
@@ -63,9 +63,6 @@
         "providerShortName": null,
         "signingIdentity": null
       },
-      "resources": [
-        "../src/resources/*"
-      ],
       "shortDescription": "",
       "targets": "all",
       "windows": {
