@@ -3,7 +3,7 @@
         ({instanceList.length})
     </div>
     <div class="p-3">
-        <input id="instanceWidth" type="range" min="3" max="27" bind:value={instanceSize} on:change={adjustSize}>
+        <input class="" type="range" min="3" max="27" bind:value={instanceSize} on:change={adjustSize}>
     </div>
 </Topbar>
 <div id="instanceContainer" class="h-fit bg-black">
@@ -36,7 +36,7 @@
     /**
      * @type {import("@tauri-apps/api/event").UnlistenFn}
      */
-    let unlisten
+    let unlistenIAdd
     /**
      * @type {[{name:"",icon:"",path:""}]}
      */
@@ -54,15 +54,13 @@
         let instancePath = await getSetting('instancePath')
         let iconPath = await getSetting('iconPath')
 
-        invoke('unlock_icons', { path: iconPath })
+        if(iconPath) invoke('unlock_icons', { path: iconPath })
         
-        unlisten = await listen('instance_create', async (event) => {
+        unlistenIAdd = await listen('instance_create', async (event) => {
             let ic = event.payload.icon
 
             if(ic=='' || prismIcons.includes(ic)) {
                 event.payload.icon = null
-            } else if(ic == 'flame') {
-                event.payload.icon = 'https://static-beta.curseforge.com/images/favicon.ico'
             } else if(ic.startsWith("https://media.forgecdn.net")) {
                 //do nothing
             } else if(ic == 'curse:666') {
@@ -75,13 +73,15 @@
                     event.payload.icon = json.icon_url
                 })
             } else {
-                event.payload.icon = convertFileSrc(await join(iconPath, ic))
+                if(iconPath) event.payload.icon = convertFileSrc(await join(iconPath, ic))
+                else event.payload.icon = null
             }
 
             if(!event.payload.icon) event.payload.icon = 'default_instance.png'
             
             // @ts-ignore
             instanceList = [...instanceList, event.payload]
+            instanceList.sort()
         })
 
         if (instancePath!=null) {
@@ -91,7 +91,7 @@
 
     //Remove event listener on unload
     onDestroy(async () => {
-        unlisten()
+        unlistenIAdd()
         changeSetting('instanceSize', instanceSize)
     })
 

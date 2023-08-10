@@ -1,4 +1,4 @@
-import { readTextFile, writeTextFile } from '@tauri-apps/api/fs'
+import { readTextFile, writeTextFile, createDir, BaseDirectory, exists } from '@tauri-apps/api/fs'
 import { appConfigDir } from '@tauri-apps/api/path'
 import { open } from '@tauri-apps/api/dialog'
 import { parse, stringify } from 'yaml'
@@ -10,6 +10,11 @@ import { parse, stringify } from 'yaml'
  */
 export async function readSettings() {
     const settingsDir = await appConfigDir()
+    if(!await exists('settings.yaml', { dir: BaseDirectory.AppConfig })) {
+        console.warn("Config file does not exist. Creating it...")
+        await createDir(settingsDir)
+        await writeSettings({})
+    }
     return parse(await readTextFile(`${settingsDir}/settings.yaml`))?? {}
 }
 

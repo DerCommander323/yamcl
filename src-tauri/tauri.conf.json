@@ -20,7 +20,7 @@
         "save": true 
       },
       "fs": {
-        "scope": ["$APPCONFIG/*"],
+        "scope": ["$APPCONFIG/**", "$APPCONFIG"],
         "all": true,
         "readFile": true,
         "writeFile": true,
