@@ -9,7 +9,9 @@ use tauri::{Manager, AppHandle};
 struct InstanceData {
   name: String,
   icon: String,
-  path: String
+  path: String,
+  last_played_string: String,
+  last_played_epoch: u64
 }
 
 
@@ -22,9 +24,10 @@ pub fn handle_instance_cf(dir: DirEntry, app_handle: AppHandle) {
         icon = "curse:".to_owned()+&json["installedModpack"]["addonID"].as_u64().unwrap_or(666).to_string()
     }
     let path = dir.path().to_str().unwrap_or("invalid_path").to_string();
+    let last_played_string = json["lastPlayed"].as_str().unwrap_or("invalid").to_string();
 
-    println!("Curseforge: {}, Icon: {}", &name, &icon);
-    emit_instance_create(InstanceData { name, icon, path }.into(), app_handle)
+    println!("Curseforge: {}, Last Played: {}", &name, &last_played_string);
+    emit_instance_create(InstanceData { name, icon, path, last_played_string, last_played_epoch: 0 }.into(), app_handle)
 }
 
 pub fn handle_instance_mmc(dir: DirEntry, app_handle: AppHandle) {
@@ -34,12 +37,14 @@ pub fn handle_instance_mmc(dir: DirEntry, app_handle: AppHandle) {
     let mut config = Ini::new();
     config.read(data).unwrap();
 
-    let name = config.get("default","name").unwrap();
-    let icon = config.get("default","iconKey").unwrap();
+    let name = config.get("default","name").unwrap_or(String::from("Name not found!"));
+    let icon = config.get("default","iconKey").unwrap_or(String::from("default"));
     let path = dir.path().join(".minecraft").to_str().unwrap_or("invalid_path").to_string();
+    let last_played_epoch: u64 = config.get("default","lastLaunchTime").unwrap_or(String::from("1")).parse::<u64>().unwrap_or(0);
+    
 
-    println!("MultiMC: {}, Icon: {}", &name, &icon);
-    emit_instance_create(InstanceData { name, icon, path }.into(), app_handle)
+    println!("MultiMC: {}, Last Played: {}", &name, &last_played_epoch);
+    emit_instance_create(InstanceData { name, icon, path, last_played_string: "".to_string(), last_played_epoch }.into(), app_handle)
 }
 
 fn emit_instance_create(data: InstanceData, app_handle: AppHandle) {

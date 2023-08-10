@@ -1,6 +1,7 @@
 <script>
     export let name = "Fallback Name!"
     export let icon = "src/resources/default_instance.png"
+    export let lastPlayed = new Date(1)
 
     /**
      * @type {String}
@@ -36,6 +37,10 @@
     </div>
     <div class="whitespace-nowrap overflow-hidden overflow-ellipsis p-1 px-2 font-semibold text-xl text-gray-300">
         {name}
+    </div>
+    <!-- This time display is temporary, will be moved inside instances later -->
+    <div class="whitespace-nowrap overflow-hidden text-sm">
+        {lastPlayed}
     </div>
     
     <button 
