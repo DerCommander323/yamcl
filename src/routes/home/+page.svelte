@@ -9,7 +9,7 @@
 <div id="instanceContainer" class="h-fit bg-black">
     <ol id="instances" class="grid">
         {#each instanceList as instance}
-            <InstanceTile name={instance.name} path={instance.path} icon={instance.icon} />
+            <InstanceTile name={instance.name} path={instance.path} icon={instance.icon} lastPlayed={instance.last_played} />
         {/each}
     </ol>
 </div>
@@ -23,6 +23,7 @@
     import { getSetting, changeSetting } from "../../scripts/settings"
     import InstanceTile from "../../components/InstanceTile.svelte"
     import Topbar from "../../components/Topbar.svelte"
+  import { intros } from "svelte/internal";
 
     const prismIcons = [
         'default', 'bee', 'brick', 'chicken', 'creeper', 'diamond', 'dirt', 'enderman', 'enderpearl', 'flame', 'fox', 'gear', 'herobrine',
@@ -38,7 +39,7 @@
      */
     let unlistenIAdd
     /**
-     * @type {[{name:"",icon:"",path:""}]}
+     * @type {[{name:string,icon:string,path:string,last_played:Date,last_played_epoch:0,last_played_string:string}]}
      */
     //@ts-ignore
     let instanceList = []
@@ -57,14 +58,15 @@
         if(iconPath) invoke('unlock_icons', { path: iconPath })
         
         unlistenIAdd = await listen('instance_create', async (event) => {
+            const default_icon = 'default_instance.png'
             let ic = event.payload.icon
 
             if(ic=='' || prismIcons.includes(ic)) {
-                event.payload.icon = null
+                event.payload.icon = default_icon
             } else if(ic.startsWith("https://media.forgecdn.net")) {
                 //do nothing
             } else if(ic == 'curse:666') {
-                event.payload.icon = null
+                event.payload.icon = default_icon
             } else if(ic.startsWith('curse:') && ic != 'curse:666') {
                 let apiReqeust = await fetch(`https://curserinth-api.kuylar.dev/v2/project/${ic.split(':')[1]}`)
                 console.log(`Fetching Icon for project ID ${ic.split(':')[1]} from CurseRinth...`)
@@ -73,15 +75,19 @@
                     event.payload.icon = json.icon_url
                 })
             } else {
-                if(iconPath) event.payload.icon = convertFileSrc(await join(iconPath, ic))
-                else event.payload.icon = null
+                event.payload.icon = iconPath ? convertFileSrc(await join(iconPath, ic)) : default_icon
             }
 
-            if(!event.payload.icon) event.payload.icon = 'default_instance.png'
+            event.payload.last_played = new Date(event.payload.last_played_epoch>0 ? event.payload.last_played_epoch : event.payload.last_played_string)
             
             // @ts-ignore
             instanceList = [...instanceList, event.payload]
-            instanceList.sort()
+            //needs to be improved
+            instanceList = instanceList.sort((a,b) => b.last_played.getTime() - a.last_played.getTime())
+            
+            console.log(event.payload.last_played)
+            
+            console.log(new Date(event.payload.last_played))
         })
 
         if (instancePath!=null) {
