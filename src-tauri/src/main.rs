@@ -1,3 +1,9 @@
+//Prevents console window on windows
+#![cfg_attr(
+    all(not(debug_assertions), target_os = "windows"),
+    windows_subsystem = "windows"
+)]
+
 use std::{fs::{self}, path::Path};
 
 use tauri::{AppHandle, Manager};
