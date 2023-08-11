@@ -1,6 +1,6 @@
 <script>
     export let name = "Fallback Name!"
-    export let icon = "src/resources/default_instance.png"
+    export let icon = "default_instance.png"
     export let lastPlayed = new Date(1)
 
     /**
@@ -13,7 +13,11 @@
 
 
     const openInstance = () => {
-        if(!buttonHover) console.log(`Opening ${path}`)
+        if(!buttonHover) {
+            console.log(`Opening ${path}`)
+            //location.assign(`/home/instance/${path.split('/').pop()}`)
+            
+        }
     }
 
     const launchInstance = () => {
@@ -26,7 +30,9 @@
     const disableButtonHover = () => buttonHover = false
 </script>
 
-<div
+<a
+    href="{buttonHover? "" : `/home/instance/${path.split('/').pop()}`}"
+
     on:mouseover={enableHover} on:focus={enableHover}
     on:mouseleave={disableHover}
     on:click={openInstance} on:keydown={openInstance}
@@ -52,4 +58,4 @@
     >
         Play
     </button>
-</div>
+</a>

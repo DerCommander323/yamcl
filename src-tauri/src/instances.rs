@@ -39,7 +39,7 @@ pub fn handle_instance_mmc(dir: DirEntry, app_handle: AppHandle) {
 
     let name = config.get("default","name").unwrap_or(String::from("Name not found!"));
     let icon = config.get("default","iconKey").unwrap_or(String::from("default"));
-    let path = dir.path().join(".minecraft").to_str().unwrap_or("invalid_path").to_string();
+    let path = dir.path().to_str().unwrap_or("invalid_path").to_string();
     let last_played_epoch: u64 = config.get("default","lastLaunchTime").unwrap_or(String::from("1")).parse::<u64>().unwrap_or(0);
     
 
