@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api"
 import { getSetting } from "./settings"
-import { listen } from "@tauri-apps/api/event"
+import { emit, listen } from "@tauri-apps/api/event"
 import { convertFileSrc } from "@tauri-apps/api/tauri"
 import { join } from "@tauri-apps/api/path"
 import { writable } from "svelte/store"
@@ -35,7 +35,7 @@ export async function gatherInstances() {
 
     if(iconPath) await invoke('unlock_icons', { path: iconPath })
     
-    let unlistenIAdd = await listen('instance_create', async (event) => {
+    await listen('instance_create', async (event) => {
         //Icon handling
         const default_icon = 'default_instance.png'
         let ic = event.payload.icon
@@ -68,10 +68,18 @@ export async function gatherInstances() {
     if (instancePath!=null) {
         await invoke('get_instances', { path: instancePath})
     }
-
-    setTimeout(() => {
-        instanceList = instanceList.sort((a,b) => b.last_played.getTime() - a.last_played.getTime())
-        instanceStore.set(instanceList)
-    }, 200 )
 }
 
+listen('instance_finish', async (event) => {
+    let unfinished = true
+    if(instanceList.length == event.payload) {
+        //Sort by last played (needs to be updated once multiple sorting options are added (Soon™))
+        instanceList = instanceList.sort((a,b) => b.last_played.getTime() - a.last_played.getTime())
+        instanceStore.set(instanceList)
+        unfinished = false
+    } else {
+        setTimeout(() => {
+            emit('instance_finish', event.payload)
+        }, 20);
+    }
+})

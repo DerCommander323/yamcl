@@ -28,6 +28,7 @@ fn unlock_icons(path: String, app_handle: AppHandle) {
 #[tauri::command(async)]
 fn get_instances(path: String, app_handle: AppHandle) {
     let paths = fs::read_dir(path).unwrap();
+    let mut instance_count: u16 = 0;
 
     for path in paths {
         if path.as_ref().unwrap().file_type().unwrap().is_dir() {
@@ -37,11 +38,12 @@ fn get_instances(path: String, app_handle: AppHandle) {
 
             for file in instance_contents {
                 match file.unwrap().file_name().into_string().unwrap().as_ref() {
-                    "minecraftinstance.json" => {instances::handle_instance_cf(instance_folder, app_handle.clone()); break;},
-                    "instance.cfg" => {instances::handle_instance_mmc(instance_folder, app_handle.clone()); break;},
+                    "minecraftinstance.json" => {instances::handle_instance_cf(instance_folder, app_handle.clone()); instance_count += 1; break;},
+                    "instance.cfg" => {instances::handle_instance_mmc(instance_folder, app_handle.clone()); instance_count += 1; break;},
                     _ => continue
                 }   
             }
         }
     }
+    app_handle.emit_all("instance_finish", instance_count).unwrap();
 }
