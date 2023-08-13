@@ -67,6 +67,7 @@ name = "app"
 version = "0.1.0"
 dependencies = [
  "configparser",
+ "fastrand",
  "serde",
  "serde_json",
  "tauri",

@@ -11,12 +11,12 @@ import { writable } from "svelte/store"
 //@ts-ignore
 export const instanceStore = writable([])
 /**
- * @type {{name:string,icon:string,path:string,last_played:Date,last_played_epoch:0,last_played_string:string}[]}
+ * @type {{name:string,icon:string,path:string,id:0,last_played:Date,last_played_epoch:0,last_played_string:string}[]}
  */
 //@ts-ignore
 let instanceList = []
 /**
- * @type {{name:string,icon:string,path:string,last_played:Date,last_played_epoch:0,last_played_string:string}}
+ * @type {{name:string,icon:string,path:string,id:0,last_played:Date,last_played_epoch:0,last_played_string:string}}
  */
 export let selectedInstance
 
@@ -60,9 +60,7 @@ export async function gatherInstances() {
         //Date handling
         event.payload.last_played = new Date(event.payload.last_played_epoch>0 ? event.payload.last_played_epoch : event.payload.last_played_string)
         
-        // @ts-ignore
         instanceList.push(event.payload)
-        
     })
 
     if (instancePath!=null) {
