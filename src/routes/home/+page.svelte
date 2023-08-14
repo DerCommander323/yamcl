@@ -7,9 +7,9 @@
     </div>
 </Topbar>
 <div id="instanceContainer" class="h-fit bg-black">
-    <ol id="instances" class="grid">
+    <ol id="instances" class="grid opacity-0">
         {#each $instanceStore as instance}
-            <InstanceTile name={instance.name} path={instance.path} icon={instance.icon} lastPlayed={instance.last_played} />
+            <InstanceTile name={instance.name} path={instance.path} icon={instance.icon} id={instance.id} />
         {/each}
     </ol>
 </div>
@@ -46,7 +46,10 @@
         const width = window.innerWidth-40
         const e = document.getElementById('instances')
         // @ts-ignore
-        if (e) e.style.gridTemplateColumns = `repeat(${Math.ceil((width*(30-instanceSize))/2500)}, minmax(0, 1fr))`
+        if (e) {
+            e.style.gridTemplateColumns = `repeat(${Math.ceil((width*(30-instanceSize))/2500)}, minmax(0, 1fr))`
+            e.style.opacity = "100"
+        }
     }
 
     //Adjust CSS Grid Columns on resize

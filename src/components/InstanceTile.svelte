@@ -1,8 +1,10 @@
 <script>
     export let name = "Fallback Name!"
     export let icon = "default_instance.png"
-    export let lastPlayed = new Date(1)
-
+    /**
+     * @type {0}
+     */
+    export let id
     /**
      * @type {String}
      */
@@ -10,15 +12,6 @@
 
     let hover = false
     let buttonHover = false
-
-
-    const openInstance = () => {
-        if(!buttonHover) {
-            console.log(`Opening ${path}`)
-            //location.assign(`/home/instance/${path.split('/').pop()}`)
-            
-        }
-    }
 
     const launchInstance = () => {
         console.log(`Launching ${path}`)
@@ -31,11 +24,9 @@
 </script>
 
 <a
-    href="{buttonHover? "" : `/home/instance/${path.split('/').pop()}`}"
-
+    href="{buttonHover? "" : `/home/instance/${id}`}"
     on:mouseover={enableHover} on:focus={enableHover}
     on:mouseleave={disableHover}
-    on:click={openInstance} on:keydown={openInstance}
     class="m-1.5 bg-[var(--bg-secondary)] rounded-lg text-lg border border-[var(--bg-secondary)] hover:border-purple-700 duration-150 inline-grid relative cursor-pointer"
     >
     <div class="rounded-t-lg">
@@ -43,10 +34,6 @@
     </div>
     <div class="whitespace-nowrap overflow-hidden overflow-ellipsis p-1 px-2 font-semibold text-xl text-gray-300">
         {name}
-    </div>
-    <!-- This time display is temporary, will be moved inside instances later -->
-    <div class="whitespace-nowrap overflow-hidden text-sm">
-        {lastPlayed}
     </div>
     
     <button 

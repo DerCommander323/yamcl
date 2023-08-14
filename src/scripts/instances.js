@@ -6,19 +6,13 @@ import { join } from "@tauri-apps/api/path"
 import { writable } from "svelte/store"
 
 /**
- * @type {import("svelte/store").Writable<{name:string,icon:string,path:string,last_played:Date,last_played_epoch:0,last_played_string:string}[]>}
+ * @type {import("svelte/store").Writable<{name:string,icon:string,path:string,id:0,last_played:Date,last_played_epoch:0,last_played_string:string}[]>}
  */
-//@ts-ignore
 export const instanceStore = writable([])
 /**
  * @type {{name:string,icon:string,path:string,id:0,last_played:Date,last_played_epoch:0,last_played_string:string}[]}
  */
-//@ts-ignore
 let instanceList = []
-/**
- * @type {{name:string,icon:string,path:string,id:0,last_played:Date,last_played_epoch:0,last_played_string:string}}
- */
-export let selectedInstance
 
 const prismIcons = [
     'default', 'bee', 'brick', 'chicken', 'creeper', 'diamond', 'dirt', 'enderman', 'enderpearl', 'flame', 'fox', 'gear', 'herobrine',
