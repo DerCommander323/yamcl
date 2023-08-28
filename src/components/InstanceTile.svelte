@@ -1,4 +1,6 @@
 <script>
+  import { launchInstance } from "../scripts/instances";
+
     export let name = "Fallback Name!"
     export let icon = "default_instance.png"
     /**
@@ -13,8 +15,8 @@
     let hover = false
     let buttonHover = false
 
-    const launchInstance = () => {
-        console.log(`Launching ${path}`)
+    const launch = () => {
+        launchInstance(path)
     }
 
     const enableHover = () => hover = true
@@ -39,7 +41,7 @@
     <button 
     on:mouseover={enableButtonHover} on:focus={enableButtonHover}
     on:mouseleave={disableButtonHover}
-    on:click={launchInstance} on:keydown={launchInstance}
+    on:click={launch} on:keydown={launch}
     class="rounded-b-md absolute bottom-0 font-medium hover:underline overflow-hidden
         {hover ? "w-full text-xl p-1 duration-150 bg-purple-700" : "text-[0px] h-0"}"
     >

@@ -8,12 +8,15 @@ use std::{fs::{self}, path::Path};
 
 use tauri::{AppHandle, Manager};
 mod instances;
+mod minecraft;
 
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             get_instances,
-            unlock_icons
+            unlock_icons,
+            minecraft::launch_instance,
+            minecraft::get_java_version
         ])
         .run(tauri::generate_context!())
         .expect("failed to run app");

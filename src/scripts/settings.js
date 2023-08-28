@@ -55,12 +55,11 @@ export async function getSetting(name) {
  * @returns {Promise<string | string[] | null>} The user-selected Directory
  */
 export async function pickDir() {
-    const selected = await open({
+    return await open({
         directory: true,
         multiple: false,
         recursive: true
     })
-    return selected
 }
 
 

@@ -75,3 +75,11 @@ listen('instance_finish', async (event) => {
         }, 20);
     }
 })
+
+/**
+ * @param {String} mcPath
+ */
+export async function launchInstance(mcPath) {
+    
+    invoke('launch_instance', { minecraftPath: mcPath, javaPath: 'java' })
+}

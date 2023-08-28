@@ -15,7 +15,7 @@
 </div>
 
 <script>
-    import { onMount, onDestroy } from "svelte"
+    import { onMount } from "svelte"
 
     import { getSetting, changeSetting } from "../../scripts/settings"
     import { instanceStore, gatherInstances } from "../../scripts/instances"
@@ -35,12 +35,6 @@
         if(!$instanceStore.length) gatherInstances()
     })
 
-
-    //Remove event listener on unload
-    onDestroy(async () => {
-        changeSetting('instanceSize', instanceSize)
-    })
-
     //Adjust CSS Grid Columns to window width
     function adjustSize() {
         const width = window.innerWidth-40
@@ -50,6 +44,7 @@
             e.style.gridTemplateColumns = `repeat(${Math.ceil((width*(30-instanceSize))/2500)}, minmax(0, 1fr))`
             e.style.opacity = "100"
         }
+        changeSetting('instanceSize', instanceSize)
     }
 
     //Adjust CSS Grid Columns on resize
