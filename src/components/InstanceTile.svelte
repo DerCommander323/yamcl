@@ -43,7 +43,7 @@
     on:mouseleave={disableButtonHover}
     on:click={launch} on:keydown={launch}
     class="rounded-b-md absolute bottom-0 font-medium hover:underline overflow-hidden
-        {hover ? "w-full text-xl p-1 duration-150 bg-purple-700" : "text-[0px] h-0"}"
+        {hover ? "w-full text-xl p-1 duration-150 bg-purple-700 opacity-90 " : "text-[0px] h-0 opacity-0"}"
     >
         Play
     </button>

@@ -1,5 +1,5 @@
 <aside 
-    class="z-20 bg-[var(--bg-secondary)] left-0 top-0 py-4 items-center flex flex-col fixed h-screen text-white ease-in-out duration-150 p-1 
+    class="z-20 bg-[var(--bg-secondary)] left-0 top-0 px-1 py-2 items-center flex flex-col fixed h-full text-white ease-in-out duration-200
         border-[var(--bg-tertiary)] border-r {expanded ? "w-36" : "w-14"}"
     >
 
@@ -8,13 +8,14 @@
             <IconHome />
         </NavButton>
 
+        <NavButton text="Create" href="/create" show={expanded}>
+            <IconCreate />
+        </NavButton>
+
         <NavButton text="Settings" href="/settings" show={expanded}>
             <IconSettings />
         </NavButton>
 
-        <NavButton text="Create" href="/create" show={expanded}>
-            <IconCreate />
-        </NavButton>
     </div>
      
 
