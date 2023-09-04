@@ -23,7 +23,7 @@
         {#if javaDropdownExtended}
             <ul transition:slide id="javaList" class="px-2 py-0.5 m-1 rounded-md bg-[var(--bg-tertiary)]">
                 {#each $javaStore as java, index}
-                    <button on:click={() => java.extended = !java.extended} class="my-1.5 flex flex-row w-full hover:underline { java.extended ? "underline" : ""}">
+                    <button on:click={() => { java.extended = !java.extended; java.mcExtended = false; }} class="my-1.5 flex flex-row w-full hover:underline { java.extended ? "underline" : ""}">
                         <p class="w-7 duration-200 {java.extended ? "rotate-90" : ""}"> <IconArrow /> </p>
                         {java.label}
                     </button>
@@ -59,7 +59,19 @@
                             </div>
                             <div class="flex flex-row">
                                 <p class="p-1"> Minecraft Version List: </p>
-                                
+                                <MinecraftList
+                                    text="From..."
+                                    selected={java.mcVersions?.min} 
+                                    dateFilter={(v)=>(java.mcVersions?.max.releaseTime ? new Date(v.releaseTime) < new Date(java.mcVersions?.max.releaseTime) : true)}
+                                    on:clicked={(e)=>{updateJavaMcVersions(index, 'min', e.detail.ver)}}
+                                />
+                                <p class="p-1"> - </p>
+                                <MinecraftList
+                                    text="To..."
+                                    selected={java.mcVersions?.max} 
+                                    dateFilter={(v)=>(new Date(v.releaseTime) > new Date(java.mcVersions?.min.releaseTime ?? 0))}
+                                    on:clicked={(e)=>{updateJavaMcVersions(index, 'max', e.detail.ver)}}
+                                />
                             </div>
                         </li>
                     {/if}
@@ -79,9 +91,10 @@
 
 <script>
     import Topbar from '../../components/Topbar.svelte'
+    import MinecraftList from '../../components/MinecraftList.svelte'
     import { pickDir, changeSetting, getSetting } from '../../scripts/settings'
-    import { javaStore, getJavaSettings, saveJavaSettings, testJavaVersion, setJavaPath, addJavaSetting, deleteJavaSetting } from '../../scripts/javas'
-    import { getMinecraftVersions } from '../../scripts/versions'
+    import { javaStore, getJavaSettings, saveJavaSettings, testJavaVersion, setJavaPath, addJavaSetting, deleteJavaSetting, updateJavaMcVersions } from '../../scripts/javas'
+    import { getMinecraftVersions, minecraftVersionList } from '../../scripts/versions'
 
     import IconArrow from 'svelte-icons/md/MdChevronRight.svelte'
     import IconPlus from 'svelte-icons/md/MdAdd.svelte'
@@ -92,6 +105,9 @@
     let instancePath = 'Loading...'
     let iconPath = 'Loading...'
 
+    /**
+     * @type {typeof minecraftVersionList}
+     */
     let mcVersions
 
     if(!$javaStore.length) getJavaSettings()
@@ -126,6 +142,7 @@
         changeSetting('instancePath', dir)
         instancePath = dir
     }
+
     async function setIconPath() {
         /**
          * @type String
@@ -138,9 +155,9 @@
         iconPath = dir
     }
 
-    async function toggleJavaDropdown() {
+    function toggleJavaDropdown() {
         javaDropdownExtended = !javaDropdownExtended
-        if(javaDropdownExtended) $javaStore.forEach(e => e.extended = false)
+        if(javaDropdownExtended) $javaStore.forEach(e => {e.extended = false; e.mcExtended = false})
     }
 
     

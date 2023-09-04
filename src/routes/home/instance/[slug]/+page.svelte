@@ -6,7 +6,7 @@
     </div>
     <button on:click={launch} class="bg-purple-700 m-1 rounded-lg p-2 px-3 hover:underline right">Launch</button>
 </Topbar>
-<div class="m-2 p-1 bg-[var(--bg-secondary)] rounded-lg text-lg">
+<div class="m-2 p-1 bg-[var(--bg-secondary)] rounded-lg text-lg h-full">
     Last played: {currentInstance?.last_played}
 </div>
 

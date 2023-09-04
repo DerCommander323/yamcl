@@ -2,19 +2,20 @@ import { invoke } from "@tauri-apps/api";
 import { open, confirm } from "@tauri-apps/api/dialog";
 import { changeSetting, getSetting } from "./settings";
 import { writable } from "svelte/store";
+// @ts-ignore
+import { minecraftVersionList } from "./versions";
+
 
 
 /**
- * @type {import("svelte/store").Writable<{ path: string, label: string, version: string, mcList: string[], xmx:number, xms: number, args: string, extended: boolean }[]>}
+ * @type {import("svelte/store").Writable<{ path: string, label: string, version: string,  mcVersions: {min: typeof minecraftVersionList.versions[0], max: typeof minecraftVersionList.versions[0]}, xmx:number, xms: number, args: string, extended: boolean, mcExtended: boolean }[]>}
  */
 export const javaStore = writable([])
 
 /**
- * @type {{ path: string, label: string, version: string, mcList: string[], xmx:number, xms: number, args: string, extended: boolean }[]}
+ * @type {{ path: string, label: string, version: string,  mcVersions: {min: typeof minecraftVersionList.versions[0], max: typeof minecraftVersionList.versions[0]}, xmx:number, xms: number, args: string, extended: boolean, mcExtended: boolean }[]}
  */
 let javaSettings = []
-
-
 
 export async function getJavaSettings() {
     javaSettings = await getSetting('javaSettings')
@@ -23,19 +24,20 @@ export async function getJavaSettings() {
 
 export function saveJavaSettings() {
     /**
-   * @type {{ path: string, label: string, version: string, mcList: string[], xmx:number, xms: number, args: string, }[]}
+   * @type {{ path: string, label: string, version: string, mcVersions: {min: typeof minecraftVersionList.versions[0], max: typeof minecraftVersionList.versions[0]}, xmx:number, xms: number, args: string, }[]}
    */
     let _savedJavaSettings = []
     javaSettings.forEach(e => {
-        const { path, label, version, mcList, args, xmx, xms } = e
-        _savedJavaSettings.push({ path, label, version, mcList, args, xmx, xms })
+        const { path, label, version, mcVersions, args, xmx, xms } = e
+        _savedJavaSettings.push({ path, label, version, mcVersions, args, xmx, xms })
     })
     changeSetting('javaSettings', _savedJavaSettings)
 }
 
 export function addJavaSetting() {
     javaSettings.push({
-        path: 'Click to set!', label: 'New Java', mcList: [], args: '', xmx: 4096, xms: 2048, extended: true, version: 'Select Java binary path!'
+        // @ts-ignore
+        path: 'Click to set!', label: 'New Java', mcVersions: {min:{},max:{}}, args: '', xmx: 4096, xms: 2048, extended: true, version: 'Select Java binary path!', mcExtended: false
     })
     javaStore.set(javaSettings)
 }
@@ -53,6 +55,19 @@ export async function deleteJavaSetting(index) {
         javaStore.set(javaSettings)
         saveJavaSettings()
     }
+}
+
+/**
+ * @param {number} index Index of the Java in javaSettings
+ * @param {'min' | 'max'} minmax The Property in the javaSetting
+ * @param {any} value The new value for the Property
+ */
+export function updateJavaMcVersions(index, minmax, value) {
+    // @ts-ignore
+    if(!javaSettings[index].mcVersions) javaSettings[index].mcVersions = {min: {}, max: {}}
+    javaSettings[index].mcVersions[minmax] = value
+    javaStore.set(javaSettings)
+    saveJavaSettings()
 }
 
 /**
