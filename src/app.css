@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 :root {
-    --bg-main: #060606;
+    --bg-primary: #060606;
     --bg-secondary: #111214;
     --bg-tertiary: #171718;
 
     font-family: 'Inter', sans-serif;
-    background-color: var(--bg-main);
+    background-color: var(--bg-primary);
     /* 
     --bg-main: #1E1E20;
     --bg-secondary: #252529;

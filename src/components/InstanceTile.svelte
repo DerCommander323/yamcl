@@ -35,7 +35,7 @@
     class="m-1.5 bg-[var(--bg-secondary)] rounded-lg text-lg border border-[var(--bg-secondary)] hover:border-purple-700 duration-150 inline-grid relative cursor-pointer"
     >
     <div class="rounded-t-lg">
-            <img on:error={(e)=>{e.target.src="default_instance.png"}} src={icon} alt="Fallback Instance Icon" class="w-full rounded-t-lg bg-[#1d1e21] border-4 border-[var(--bg-secondary)]"/>
+            <img on:error={(e)=>{if(e.target.src!="default_instance.png") e.target.src="default_instance.png"}} src={icon} alt="Fallback Instance Icon" class="w-full rounded-t-lg bg-[#1d1e21] border-4 border-[var(--bg-secondary)]"/>
 
     </div>
     <div class="whitespace-nowrap overflow-hidden overflow-ellipsis p-1 px-2 font-semibold text-xl text-gray-300">

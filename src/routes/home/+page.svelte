@@ -6,7 +6,7 @@
         <input class="" type="range" min="3" max="27" bind:value={instanceSize} on:change={adjustSize}>
     </div>
 </Topbar>
-<div id="instanceContainer" class="h-fit bg-black">
+<div id="instanceContainer" class="h-fit bg-[var(--bg-primary)]">
     <ol id="instances" class="grid opacity-0">
         {#each $instanceStore as instance}
             <InstanceTile name={instance.name} path={instance.path} icon={instance.icon} id={instance.id} />

@@ -4,6 +4,7 @@ import { emit, listen } from "@tauri-apps/api/event"
 import { convertFileSrc } from "@tauri-apps/api/tauri"
 import { join } from "@tauri-apps/api/path"
 import { writable } from "svelte/store"
+import { createNotification, finishNotification } from "./notificationSystem"
 
 /**
  * @type {import("svelte/store").Writable<{name:string,icon:string,path:string,id:0,last_played:Date,last_played_epoch:0,last_played_string:string}[]>}
@@ -28,21 +29,21 @@ export async function gatherInstances() {
     let iconPath = await getSetting('iconPath')
 
     if(iconPath) await invoke('unlock_icons', { path: iconPath })
+
+    createNotification('instance_gather', 'Gathering Instances...')
     
     await listen('instance_create', async (event) => {
         //Icon handling
         const default_icon = 'default_instance.png'
         let ic = event.payload.icon
 
-        if(ic=='' || prismIcons.includes(ic)) {
+        if(ic=='' || ic=='curse:666' || prismIcons.includes(ic)) {
             event.payload.icon = default_icon
         } else if(ic.startsWith("https://media.forgecdn.net")) {
             //do nothing
-        } else if(ic == 'curse:666') {
-            event.payload.icon = default_icon
-        } else if(ic.startsWith('curse:') && ic != 'curse:666') {
-            let apiReqeust = await fetch(`https://curserinth-api.kuylar.dev/v2/project/${ic.split(':')[1]}`)
+        } else if(ic.startsWith('curse:')) {
             console.log(`Fetching Icon for project ID ${ic.split(':')[1]} from CurseRinth...`)
+            let apiReqeust = await fetch(`https://curserinth-api.kuylar.dev/v2/project/${ic.split(':')[1]}`)
             apiReqeust.json().then(json => {
                 console.log(json.icon_url)
                 event.payload.icon = json.icon_url
@@ -58,21 +59,23 @@ export async function gatherInstances() {
     })
 
     if (instancePath!=null) {
-        await invoke('get_instances', { path: instancePath})
+        invoke('get_instances', { path: instancePath})
     }
 }
 
+let finished = false
 listen('instance_finish', async (event) => {
-    let unfinished = true
+    if(finished) return
     if(instanceList.length == event.payload) {
         //Sort by last played (needs to be updated once multiple sorting options are added (Soon™))
         instanceList = instanceList.sort((a,b) => b.last_played.getTime() - a.last_played.getTime())
         instanceStore.set(instanceList)
-        unfinished = false
+        finishNotification('instance_gather', `Finished gathering <b class="font-semibold">${event.payload}</b> Instances!`, 'success')
+        finished=true
     } else {
         setTimeout(() => {
             emit('instance_finish', event.payload)
-        }, 20);
+        }, 50)
     }
 })
 
