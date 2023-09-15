@@ -70,7 +70,7 @@ listen('instance_finish', async (event) => {
         //Sort by last played (needs to be updated once multiple sorting options are added (Soon™))
         instanceList = instanceList.sort((a,b) => b.last_played.getTime() - a.last_played.getTime())
         instanceStore.set(instanceList)
-        finishNotification('instance_gather', `Finished gathering <b class="font-semibold">${event.payload}</b> Instances!`, 'success')
+        finishNotification('instance_gather', `Finished gathering <b class="font-semibold mx-1">${event.payload}</b> Instances!`, 'success')
         finished=true
     } else {
         setTimeout(() => {

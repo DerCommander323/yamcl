@@ -1,9 +1,10 @@
 import { invoke } from "@tauri-apps/api";
 import { open, confirm } from "@tauri-apps/api/dialog";
-import { changeSetting, getSetting } from "./settings";
 import { writable } from "svelte/store";
 // @ts-ignore
 import { minecraftVersionList } from "./versions";
+import { changeSetting, getSetting } from "./settings";
+import { createNotification, finishNotification } from "./notificationSystem";
 
 
 
@@ -82,9 +83,20 @@ function getJavaArgs(index) {
 * @param {number} index Index of the Java in javaSettings
 */
 export async function testJavaVersion(index) {
-    await getJavaVersion(javaSettings[index].path, getJavaArgs(index))
-        .then(v => { javaSettings[index].version = v; saveJavaSettings() })
-        .catch(err => { console.error(err); javaSettings[index].version = 'Invalid Java!'})
+    let java = javaSettings[index]
+    createNotification(`java_test_${java.path}`, `Testing Java at ${java.path}...`)
+    await invoke('get_java_version', { path: java.path, args: getJavaArgs(index)})
+        .then(output => {
+            let outputArray = output.replaceAll('"','').replaceAll('\n',' ').split(' ')
+            java.version = outputArray[2]
+            saveJavaSettings()
+            finishNotification(`java_test_${java.path}`, `<div class="flex flex-col"> Java Test succeeded: <code class="bg-[var(--bg-secondary)] text-sm p-1 rounded-md"> ${output.replaceAll('\n',' ')} </code> </div>`, 'success')
+        })
+        .catch(err => {
+            console.error(err)
+            java.version = 'Invalid Java!'
+            finishNotification(`java_test_${java.path}`, `<div class="flex flex-col"> Java Test failed: <code class="bg-[var(--bg-secondary)] text-sm p-1 rounded-md"> ${err} </code> </div>`, 'error')
+        })
     javaStore.set(javaSettings)
 }
 
@@ -97,8 +109,7 @@ export async function getJavaVersion(path, args) {
     return new Promise((resolve, reject) => {
         invoke('get_java_version', { path, args })
             .then(res => {
-                res = res.replaceAll('"','')
-                res = res.replaceAll('\n',' ')
+                res = res.replaceAll('"','').replaceAll('\n',' ')
                 let array = res.split(' ')
                 resolve(`${array[2]}`)
             })

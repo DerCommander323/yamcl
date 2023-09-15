@@ -1,26 +1,24 @@
 use std::process::Command;
 
-
-
-#[tauri::command]
-pub fn get_java_version(path: String, args: String) -> Option<String> {
+#[tauri::command(async)]
+pub fn get_java_version(path: String, args: String) -> Result<String, String> {
     println!("Getting Java version for: {} using args: {}", path, args);
 
     let java_process = Command::new(path).args(args.split_whitespace()).arg("-version").output();
 
     if java_process.is_err() {
         println!("Java test failed!");
-        None
+        Err(String::from("Executing Java Command failed! Is the binary path valid?"))
     } else {
         if java_process.as_ref().unwrap().status.success() {
             let output = java_process.unwrap().stderr;
             println!("Java test succeeded:\n{}", String::from_utf8(output.clone()).unwrap());
-            Some(String::from_utf8(output).unwrap())
+            Ok(String::from_utf8(output).unwrap())
         } else {
-            println!("Java command failed:\n{}", String::from_utf8(java_process.unwrap().stderr).unwrap());
-            None
+            let output = java_process.unwrap().stderr;
+            println!("Java command failed:\n{}", String::from_utf8(output.clone()).unwrap());
+            Err(String::from_utf8(output).unwrap())
         }
-
     }
 }
 
