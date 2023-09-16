@@ -1,8 +1,6 @@
 <script>
-// @ts-nocheck because of the on:error check in the img
-
-
-  import { launchInstance } from "../scripts/instances";
+    // @ts-nocheck because of the on:error check in the img
+    import { launchInstance } from "../scripts/instances"
 
     export let name = "Fallback Name!"
     export let icon = "default_instance.png"
