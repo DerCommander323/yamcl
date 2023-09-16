@@ -5,6 +5,7 @@ import { convertFileSrc } from "@tauri-apps/api/tauri"
 import { join } from "@tauri-apps/api/path"
 import { writable } from "svelte/store"
 import { createNotification, finishNotification } from "./notificationSystem"
+import { exists } from "@tauri-apps/api/fs"
 
 /**
  * @type {import("svelte/store").Writable<{name:string,icon:string,path:string,id:0,last_played:Date,last_played_epoch:0,last_played_string:string}[]>}
@@ -14,6 +15,7 @@ export const instanceStore = writable([])
  * @type {{name:string,icon:string,path:string,id:0,last_played:Date,last_played_epoch:0,last_played_string:string}[]}
  */
 let instanceList = []
+export let instancesFinished = false
 
 const prismIcons = [
     'default', 'bee', 'brick', 'chicken', 'creeper', 'diamond', 'dirt', 'enderman', 'enderpearl', 'flame', 'fox', 'gear', 'herobrine',
@@ -31,6 +33,14 @@ export async function gatherInstances() {
     if(iconPath) await invoke('unlock_icons', { path: iconPath })
 
     createNotification('instance_gather', 'Gathering Instances...')
+
+    if(!instancePath) {
+        finishNotification('instance_gather', 'Instance gathering failed: The instance folder is unset! Go to the Settings to set it.', 'error')
+        return 
+    } else if(!await exists(instancePath).catch(() => false)) {
+        finishNotification('instance_gather', 'Instance gathering failed: The instance folder does not exist!', 'error')
+        return
+    }
     
     await listen('instance_create', async (event) => {
         //Icon handling
@@ -58,20 +68,17 @@ export async function gatherInstances() {
         instanceList.push(event.payload)
     })
 
-    if (instancePath!=null) {
-        invoke('get_instances', { path: instancePath})
-    }
+    invoke('get_instances', { path: instancePath})
 }
 
-let finished = false
 listen('instance_finish', async (event) => {
-    if(finished) return
+    if(instancesFinished) return
     if(instanceList.length == event.payload) {
         //Sort by last played (needs to be updated once multiple sorting options are added (Soon™))
         instanceList = instanceList.sort((a,b) => b.last_played.getTime() - a.last_played.getTime())
         instanceStore.set(instanceList)
         finishNotification('instance_gather', `Finished gathering <b class="font-semibold mx-1">${event.payload}</b> Instances!`, 'success')
-        finished=true
+        instancesFinished = true
     } else {
         setTimeout(() => {
             emit('instance_finish', event.payload)

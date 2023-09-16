@@ -12,8 +12,7 @@ export async function readSettings() {
     const settingsDir = await appConfigDir()
     if(!await exists('settings.yaml', { dir: BaseDirectory.AppConfig })) {
         console.warn("Config file does not exist. Creating it...")
-        await createDir(settingsDir)
-        await writeSettings({})
+        createDir(settingsDir).finally(() => writeSettings({}))
     }
     return parse(await readTextFile(`${settingsDir}/settings.yaml`))?? {}
 }
