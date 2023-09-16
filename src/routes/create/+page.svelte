@@ -2,11 +2,6 @@
 
 <b>TODO, sorry</b>
 
-<div class="max-w-[40%]">
-    Test
-    <p class="bg-gray-600 break-words">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa</p>
-</div>
-
 <script>
-    import Topbar from "../../components/Topbar.svelte";
+    import Topbar from "../../components/Topbar.svelte"
 </script>

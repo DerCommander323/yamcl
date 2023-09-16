@@ -8,7 +8,7 @@ pub fn get_java_version(path: String, args: String) -> Result<String, String> {
 
     if java_process.is_err() {
         println!("Java test failed!");
-        Err(String::from("Executing Java Command failed! Is the binary path valid?"))
+        Err(String::from("Executing Java Command failed! Is the java path correct?"))
     } else {
         if java_process.as_ref().unwrap().status.success() {
             let output = java_process.unwrap().stderr;
