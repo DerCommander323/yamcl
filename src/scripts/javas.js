@@ -19,7 +19,7 @@ export const javaStore = writable([])
 let javaSettings = []
 
 export async function getJavaSettings() {
-    javaSettings = await getSetting('javaSettings')
+    javaSettings = await getSetting('javaSettings') ?? []
     javaStore.set(javaSettings)
 }
 

@@ -110,7 +110,7 @@
      */
     let mcVersions
 
-    if(!$javaStore.length) getJavaSettings()
+    if(!$javaStore || !$javaStore.length) getJavaSettings()
 
     let javaDropdownExtended = false
 

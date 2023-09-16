@@ -1,6 +1,6 @@
 <Topbar text="Instances">
     <div class="py-3 w-full">
-        ({$instanceStore.length==0 ? "Scanning..." : $instanceStore.length})
+        ({!instancesFinished ? "Scanning..." : $instanceStore.length})
     </div>
     <div class="p-3">
         <input class="" type="range" min="3" max="27" bind:value={instanceSize} on:change={adjustSize}>
@@ -18,21 +18,20 @@
     import { onMount } from "svelte"
 
     import { getSetting, changeSetting } from "../../scripts/settings"
-    import { instanceStore, gatherInstances } from "../../scripts/instances"
+    import { instanceStore, gatherInstances, instancesFinished } from "../../scripts/instances"
     import InstanceTile from "../../components/InstanceTile.svelte"
     import Topbar from "../../components/Topbar.svelte"
 
-
-    let instanceSize = 20
+    let instanceSize = 18
 
     //Main Code goes in here
     onMount(async () => {
-        getSetting('instanceSize').then(v => {
+        await getSetting('instanceSize').then(v => {
             if(v) instanceSize = v
             adjustSize()
-        })
+        }).catch(console.warn)
 
-        if(!$instanceStore.length) gatherInstances()
+        if(!instancesFinished) gatherInstances()
     })
 
     //Adjust CSS Grid Columns to window width
