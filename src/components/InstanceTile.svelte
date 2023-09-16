@@ -1,8 +1,13 @@
 <script>
-    export let name = "Fallback Name!"
-    export let icon = "src/resources/default_instance.png"
-    export let lastPlayed = new Date(1)
+    // @ts-nocheck because of the on:error check in the img
+    import { launchInstance } from "../scripts/instances"
 
+    export let name = "Fallback Name!"
+    export let icon = "default_instance.png"
+    /**
+     * @type {0}
+     */
+    export let id
     /**
      * @type {String}
      */
@@ -11,13 +16,8 @@
     let hover = false
     let buttonHover = false
 
-
-    const openInstance = () => {
-        if(!buttonHover) console.log(`Opening ${path}`)
-    }
-
-    const launchInstance = () => {
-        console.log(`Launching ${path}`)
+    const launch = () => {
+        launchInstance(path)
     }
 
     const enableHover = () => hover = true
@@ -26,30 +26,26 @@
     const disableButtonHover = () => buttonHover = false
 </script>
 
-<div
+<a
+    href="{buttonHover? "" : `/home/instance/${id}`}"
     on:mouseover={enableHover} on:focus={enableHover}
     on:mouseleave={disableHover}
-    on:click={openInstance} on:keydown={openInstance}
     class="m-1.5 bg-[var(--bg-secondary)] rounded-lg text-lg border border-[var(--bg-secondary)] hover:border-purple-700 duration-150 inline-grid relative cursor-pointer"
     >
     <div class="rounded-t-lg">
-        <img src={icon} alt="" class="w-full rounded-t-lg bg-[#1d1e21] border-4 border-[var(--bg-secondary)]"/>
+            <img on:error={(e)=>{if(e.target.src!="default_instance.png") e.target.src="default_instance.png"}} src={icon} alt="Fallback Instance Icon" class="w-full rounded-t-lg bg-[#1d1e21] border-4 border-[var(--bg-secondary)]"/>
     </div>
-    <div class="whitespace-nowrap overflow-hidden overflow-ellipsis p-1 px-2 font-semibold text-xl text-gray-300">
+    <div class="whitespace-nowrap overflow-hidden overflow-ellipsis p-1 px-2 font-medium text-xl text-gray-300">
         {name}
-    </div>
-    <!-- This time display is temporary, will be moved inside instances later -->
-    <div class="whitespace-nowrap overflow-hidden text-sm">
-        {lastPlayed}
     </div>
     
     <button 
     on:mouseover={enableButtonHover} on:focus={enableButtonHover}
     on:mouseleave={disableButtonHover}
-    on:click={launchInstance} on:keydown={launchInstance}
+    on:click={launch} on:keydown={launch}
     class="rounded-b-md absolute bottom-0 font-medium hover:underline overflow-hidden
-        {hover ? "w-full text-xl p-1 duration-150 bg-purple-700" : "text-[0px] h-0"}"
+        {hover ? "w-full text-xl p-1 duration-150 bg-purple-700 opacity-90 " : "text-[0px] h-0 opacity-0"}"
     >
         Play
     </button>
-</div>
+</a>

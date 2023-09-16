@@ -6,11 +6,15 @@
     import '../app.css'
 </script>
 
-<div class="w-full cursor-pointer rounded-lg p-2 hover:bg-purple-700 duration-200 fill-white text-white">
-    <a href="{href}" class="fill-inherit inline-flex font-medium text-lg">
-        <div class="h-[32px] w-[32px]">
+<a {href} class="cursor-pointer">
+    <div class="flex flex-row fill-white text-white font-medium text-lg rounded-lg p-2 hover:bg-purple-700 duration-200">
+        <div class="h-[32px] w-[32px] flex-shrink-0 m-0">
             <slot />
         </div> 
-        <p class="m-0.5 ml-2 duration-300 {show ? "opacity-100" : "opacity-0"}">{#if show}{text}{/if}</p>
-    </a>
-</div>
+        <div class="duration-200 m-0.5 {show ? "opacity-100 w-full ml-2" : "opacity-0 w-0 -ml-4"}">
+            {#if show}
+                {text}
+            {/if}
+        </div>
+    </div>
+</a>
