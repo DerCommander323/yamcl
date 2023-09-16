@@ -22,7 +22,6 @@
     import InstanceTile from "../../components/InstanceTile.svelte"
     import Topbar from "../../components/Topbar.svelte"
 
-
     let instanceSize = 18
 
     //Main Code goes in here
