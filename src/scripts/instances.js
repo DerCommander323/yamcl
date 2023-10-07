@@ -37,7 +37,7 @@ export async function gatherInstances() {
     if(!instancePath) {
         finishNotification('instance_gather', 'Instance gathering failed: The instance folder is unset! Go to the Settings to set it.', 'error')
         return 
-    } else if(!await exists(instancePath).catch(() => false)) {
+    } else if(!await invoke('file_exists', { path: instancePath })) {
         finishNotification('instance_gather', 'Instance gathering failed: The instance folder does not exist!', 'error')
         return
     }

@@ -1,5 +1,7 @@
 <script>
-    // @ts-nocheck because of the on:error check in the img
+  import { event } from "@tauri-apps/api";
+
+    // // @ts-no//check because of the on:error check in the img
     import { launchInstance } from "../scripts/instances"
 
     export let name = "Fallback Name!"
@@ -16,8 +18,21 @@
     let hover = false
     let buttonHover = false
 
+    let errorCount = 0
+
     const launch = () => {
         launchInstance(path)
+    }
+
+    
+    const onError = (/** @type {any} */ e) => {
+        if(errorCount > 3) {
+            e.target.src="default_instance.png"
+        } else {
+            errorCount++
+            if(!e.target.src.endsWith('.png')) e.target.src = e.target.src + '.png'
+            
+        }
     }
 
     const enableHover = () => hover = true
@@ -33,7 +48,7 @@
     class="m-1.5 bg-[var(--bg-secondary)] rounded-lg text-lg border border-[var(--bg-secondary)] hover:border-purple-700 duration-150 inline-grid relative cursor-pointer"
     >
     <div class="rounded-t-lg">
-            <img on:error={(e)=>{if(e.target.src!="default_instance.png") e.target.src="default_instance.png"}} src={icon} alt="Fallback Instance Icon" class="w-full rounded-t-lg bg-[#1d1e21] border-4 border-[var(--bg-secondary)]"/>
+        <img on:error={onError} src={icon} alt="Fallback Instance Icon" class="w-full rounded-t-lg bg-[#1d1e21] border-4 border-[var(--bg-secondary)]"/>
     </div>
     <div class="whitespace-nowrap overflow-hidden overflow-ellipsis p-1 px-2 font-medium text-xl text-gray-300">
         {name}

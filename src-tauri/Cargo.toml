@@ -1,11 +1,11 @@
 [package]
-name = "app"
+name = "yamcl"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
-default-run = "app"
+description = "Yet Another Minecraft Launcher"
+authors = ["dercommander323"]
+license = "GPL-3.0-only"
+repository = "https://github.com/DerCommander323/yamcl"
+default-run = "yamcl"
 edition = "2021"
 rust-version = "1.59"
 
@@ -17,8 +17,11 @@ tauri-build = { version = "1.4.0", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.4.0", features = [ "fs-create-dir", "fs-read-file", "fs-exists", "fs-write-file", "fs-read-dir", "shell-open", "dialog-all", "path-all", "protocol-asset"] }
+tauri = { version = "1.4.0", features = [ "dialog-confirm", "dialog-ask", "dialog-message", "dialog-save", "dialog-open", "fs-create-dir", "fs-read-file", "fs-exists", "fs-write-file", "shell-open", "path-all", "protocol-asset"] }
+reqwest = { version = "0.11.20", features = ["blocking", "json"] }
+uuid = { version = "1.4.1", features = ["v4", "fast-rng"] } 
 configparser = "3.0.2"
+afire = "2.2.1"
 fastrand = "2.0.0"
 
 [features]

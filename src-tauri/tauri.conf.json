@@ -12,7 +12,6 @@
   "tauri": {
     "allowlist": {
       "dialog": {
-        "all": true,
         "ask": true, 
         "confirm": true,
         "message": true,
@@ -23,7 +22,6 @@
         "scope": ["$APPCONFIG/**", "$APPCONFIG"],
         "readFile": true,
         "writeFile": true,
-        "readDir": true,
         "createDir": true,
         "exists": true
       },
@@ -53,7 +51,7 @@
         "icons/icon.ico"
       ],
       "identifier": "yamcl",
-      "longDescription": "",
+      "longDescription": "Yet Another Minecraft Launcher",
       "macOS": {
         "entitlements": null,
         "exceptionDomain": "",
@@ -70,7 +68,7 @@
       }
     },
     "security": {
-      "csp": "default-src https://* tauri://* asset://*; img-src https://* tauri://* asset://* file://*; asset https://asset.localhost; style-src * 'unsafe-inline'"
+      "csp": "default-src https://* tauri://* asset://*; img-src https://* tauri://* asset://* file://*; asset https://asset.localhost; style-src * 'unsafe-inline';"
     },
     "updater": {
       "active": false

@@ -12,6 +12,10 @@
             <IconCreate />
         </NavButton>
 
+        <NavButton text="Accounts" href="/accounts" show={expanded}>
+            <IconAccounts />
+        </NavButton>
+
         <NavButton text="Settings" href="/settings" show={expanded}>
             <IconSettings />
         </NavButton>
@@ -26,8 +30,9 @@
     import NavButton from './NavButton.svelte'
 
     import IconHome from 'svelte-icons/ti/TiHome.svelte'
-    import IconSettings from 'svelte-icons/md/MdSettings.svelte'
     import IconCreate from 'svelte-icons/md/MdAdd.svelte'
+    import IconAccounts from 'svelte-icons/fa/FaUser.svelte'
+    import IconSettings from 'svelte-icons/md/MdSettings.svelte'
 
     let expanded = false
 

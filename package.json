@@ -25,6 +25,7 @@
 	"type": "module",
 	"dependencies": {
 		"@tauri-apps/api": "^1.4.0",
+		"skinview3d": "^3.0.1",
 		"svelte-icons": "^2.1.0",
 		"yaml": "^2.3.1"
 	}

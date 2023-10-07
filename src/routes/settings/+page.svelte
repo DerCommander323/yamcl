@@ -98,7 +98,7 @@
 
     import IconArrow from 'svelte-icons/md/MdChevronRight.svelte'
     import IconPlus from 'svelte-icons/md/MdAdd.svelte'
-    import IconMinus from 'svelte-icons/md/MdRemove.svelte'
+    import IconMinus from 'svelte-icons/md/MdRemoveCircleOutline.svelte'
     import { slide } from 'svelte/transition'
     import { onMount, onDestroy } from "svelte"
 

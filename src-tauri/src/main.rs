@@ -5,27 +5,39 @@
 )]
 
 use std::{fs::{self}, path::Path};
-
 use tauri::{AppHandle, Manager};
+
 mod instances;
 mod minecraft;
+mod authentication;
+mod auth_structs;
 
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             get_instances,
             unlock_icons,
+            file_exists,
             minecraft::launch_instance,
-            minecraft::get_java_version
+            minecraft::get_java_version,
+            authentication::get_selected_account,
+            authentication::set_selected_account,
+            authentication::remove_account,
+            authentication::load_accounts,
+            authentication::add_account
         ])
         .run(tauri::generate_context!())
-        .expect("failed to run app");
-        
+        .expect("Failed to start YAMCL!");
 }
 
 #[tauri::command]
 fn unlock_icons(path: String, app_handle: AppHandle) {
     app_handle.asset_protocol_scope().allow_directory(Path::new(&path), true).unwrap();
+}
+
+#[tauri::command()]
+fn file_exists(path: String) -> bool {
+    Path::new(&path).exists()
 }
 
 #[tauri::command(async)]
@@ -50,3 +62,4 @@ fn get_instances(path: String, app_handle: AppHandle) {
     }
     app_handle.emit_all("instance_finish", instance_count).unwrap();
 }
+
