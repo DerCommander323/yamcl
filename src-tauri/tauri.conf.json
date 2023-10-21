@@ -51,7 +51,7 @@
         "icons/icon.ico"
       ],
       "identifier": "yamcl",
-      "longDescription": "Yet Another Minecraft Launcher",
+      "longDescription": "Yet Another MC Launcher",
       "macOS": {
         "entitlements": null,
         "exceptionDomain": "",
@@ -78,7 +78,7 @@
         "fullscreen": false,
         "height": 700,
         "resizable": true,
-        "title": "Yet Another Minecraft Launcher",
+        "title": "Yet Another MC Launcher",
         "width": 1200
       }
     ]

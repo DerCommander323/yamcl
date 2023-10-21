@@ -6,7 +6,7 @@ use serde_json::{json, Value};
 use tauri::{AppHandle, api::path::config_dir};
 use crate::{auth_structs::{MCAccount, MCProfile, Entitlements, MCResponse, XBLResponse, MSAResponse}, notify, NotificationState};
 
-const MS_CLIENT_ID: &str = "5431ff2d-20f8-415b-aa2f-5218eba055ea"; // The Yet Another Minecraft Launcher client_id. If you fork this project, please make sure to use your own!
+const MS_CLIENT_ID: &str = "5431ff2d-20f8-415b-aa2f-5218eba055ea"; // The Yet Another MC Launcher client_id. If you fork this project, please make sure to use your own!
 const REDIRECT_PORT: u16 = 32301;
 
 const ACCOUNT_FILE_NAME: &str = "accounts.json";

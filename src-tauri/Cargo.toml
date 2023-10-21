@@ -1,7 +1,7 @@
 [package]
 name = "yamcl"
 version = "0.1.0"
-description = "Yet Another Minecraft Launcher"
+description = "Yet Another MC Launcher"
 authors = ["dercommander323"]
 license = "GPL-3.0-only"
 repository = "https://github.com/DerCommander323/yamcl"
