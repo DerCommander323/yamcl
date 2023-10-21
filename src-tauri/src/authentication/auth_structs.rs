@@ -1,5 +1,3 @@
-#![allow(non_snake_case)]
-
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -16,12 +14,13 @@ pub struct MCProfile {
     pub capes: Vec<MCCape>
 }
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct MCSkin {
     pub id: String,
     pub state: String,
     pub url: String,
     pub variant: String,
-    pub textureKey: String,
+    pub texture_key: String,
     pub alias: Option<String>
 }
 #[derive(Serialize, Deserialize, Debug)]
@@ -40,11 +39,12 @@ pub struct MSAResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "PascalCase")]
 pub struct XBLResponse {
-    pub IssueInstant: String,
-    pub NotAfter: String,
-    pub Token: String,
-    pub DisplayClaims: XBLDisplayClaims
+    pub issue_instant: String,
+    pub not_after: String,
+    pub token: String,
+    pub display_claims: XBLDisplayClaims
 }
 
 #[derive(Serialize, Deserialize, Debug)]

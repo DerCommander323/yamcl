@@ -3,14 +3,13 @@ use std::{fs, io::Error};
 use afire::{Server, Method, Response, Status};
 use reqwest::blocking::Client;
 use serde_json::{json, Value};
-use tauri::{AppHandle, api::path::config_dir, Manager};
-use crate::auth_structs::{MCAccount, MCProfile, Entitlements, MCResponse, XBLResponse, MSAResponse};
+use tauri::{AppHandle, api::path::config_dir};
+use crate::{auth_structs::{MCAccount, MCProfile, Entitlements, MCResponse, XBLResponse, MSAResponse}, notify, NotificationState};
 
 const MS_CLIENT_ID: &str = ""; //MUST CHANGE THIS ONCE I GET MY OWN!!!!!!!!!!!!!!!!!!!!!!!!!!
 const REDIRECT_PORT: u16 = 32301;
 
 const ACCOUNT_FILE_NAME: &str = "accounts.json";
-
 
 fn get_login_url() -> String {
     String::from_iter([
@@ -22,7 +21,6 @@ fn get_login_url() -> String {
         &REDIRECT_PORT.to_string()
     ])
 }
-
 fn get_msa_url() -> String {
     String::from("https://login.live.com/oauth20_token.srf")
 }
@@ -46,33 +44,43 @@ fn get_mc_profile_url() -> String {
 
 #[tauri::command(async)]
 pub fn add_account(app_handle: AppHandle) {
-    let mut redirect_server = Server::<()>::new("127.0.0.1", REDIRECT_PORT);// HttpServer::create(end_point!(0.0.0.0:REDIRECT_PORT), 5);
+    let mut redirect_server = Server::<()>::new("127.0.0.1", REDIRECT_PORT);
 
     let login_window = tauri::WindowBuilder::new(
         &app_handle,
-        "label",
+        "yamcl_microsoft_login",
         tauri::WindowUrl::External(get_login_url().parse().unwrap())
     )
     .title("Microsoft Login")
     .inner_size(500.0, 600.0)
+    .center()
     .focused(true)
     .build()
     .unwrap();
 
-    app_handle.emit_all("login_status", "Awaiting login...").unwrap();
+    notify(&app_handle, "login_status", "Awaiting login", NotificationState::Running);
 
     std::thread::spawn(move || {
+        let app_handle_clone = app_handle.clone();
+        login_window.on_window_event(move |event| {
+            if let tauri::WindowEvent::Destroyed = event {
+                notify(&app_handle_clone, "login_status", "Login aborted!", NotificationState::Error);
+            }
+        });
+
+        let app_handle_clone = app_handle.clone();
         redirect_server.route(Method::GET, "/", move |req| {
-            println!("request happened");
             if let Some(code) = req.query.get("code") {
-                println!("Code: {:?}", code);
+                println!("Code obtained!");
+                notify(&app_handle, "login_status", "Beginning login process...", NotificationState::Running);
                 login_window.close().unwrap();
-                add_account_code(code, &app_handle);
+                add_account_code(code, &app_handle_clone);
                 Response::new()
                     .text("You may close this window now.")
                     .status(Status::Ok)
             } else {
                 println!("Getting Code failed!");
+                notify(&app_handle_clone, "login_status", "Failed getting code from response!", NotificationState::Error);
                 Response::new()
                     .text("Failed to get the authentication code!")
                     .status(Status::NotFound)
@@ -87,9 +95,11 @@ pub fn add_account(app_handle: AppHandle) {
 }
 
 fn add_account_code(code: &str, app_handle: &AppHandle) {
+    println!("Started adding new Minecraft account!");
     let client = reqwest::blocking::Client::new();
 
-    app_handle.emit_all("login_status", "Getting Microsoft Auth reponse...").unwrap();
+    println!("Getting Microsoft Auth response...");
+    notify(&app_handle, "login_status", "Getting Microsoft Auth reponse...", NotificationState::Running);
 
     let msa_params = [
         ("client_id", MS_CLIENT_ID),
@@ -106,7 +116,8 @@ fn add_account_code(code: &str, app_handle: &AppHandle) {
         .unwrap();
 
     // println!("{:#?}", msa_response);
-    app_handle.emit_all("login_status", "Getting Xbox Live Auth reponse...").unwrap();
+    println!("Getting Xbox Live Auth response...");
+    notify(&app_handle, "login_status", "Getting Xbox Live Auth reponse...", NotificationState::Running);
 
     let xbl_json = json!({
         "Properties": {
@@ -125,13 +136,14 @@ fn add_account_code(code: &str, app_handle: &AppHandle) {
         .unwrap();
 
     // println!("{:#?}", xbl_response);
-    app_handle.emit_all("login_status", "Getting Xsts Auth reponse...").unwrap();
+    println!("Getting Xsts Auth response...");
+    notify(&app_handle, "login_status", "Getting Xsts Auth reponse...", NotificationState::Running);
 
     let xsts_json = json!({
         "Properties": {
             "SandboxId": "RETAIL",
             "UserTokens": [
-                xbl_response.Token
+                xbl_response.token
             ]
         },
         "RelyingParty": "rp://api.minecraftservices.com/",
@@ -145,10 +157,11 @@ fn add_account_code(code: &str, app_handle: &AppHandle) {
     .unwrap();
 
     // println!("{:#?}", xsts_response);
-    app_handle.emit_all("login_status", "Getting Minecraft Auth reponse...").unwrap();
+    println!("Getting Minecraft Auth response...");
+    notify(&app_handle, "login_status", "Getting Minecraft Auth reponse...", NotificationState::Running);
 
     let mc_json = json!({
-        "xtoken": String::from_iter(["XBL3.0 x=", &xsts_response.DisplayClaims.xui[0].uhs, ";", &xsts_response.Token]),
+        "xtoken": String::from_iter(["XBL3.0 x=", &xsts_response.display_claims.xui[0].uhs, ";", &xsts_response.token]),
         "platform": "PC_LAUNCHER"
     });
     let mc_response: MCResponse = client.post(get_mc_url())
@@ -159,27 +172,34 @@ fn add_account_code(code: &str, app_handle: &AppHandle) {
     .unwrap();
 
     // println!("{:#?}", mc_response);
-    app_handle.emit_all("login_status", "Checking Minecraft ownership...").unwrap();
+    println!("Checking Minecraft ownership...");
+    notify(&app_handle, "login_status", "Checking Minecraft ownership...", NotificationState::Running);
 
-    println!("Owns MC = {}", has_mc_ownership(&client, &mc_response.access_token));
+    if !has_mc_ownership(&client, &mc_response.access_token) {
+        notify(&app_handle, "login_status", "Account does not own Minecraft!", NotificationState::Error);
+        return;
+    }
 
-    app_handle.emit_all("login_status", "Getting Minecraft account...").unwrap();
+    println!("Getting Minecraft account...");
+    notify(&app_handle, "login_status", "Getting Minecraft account...", NotificationState::Running);
     let mc_profile = get_mc_profile(&client, &mc_response.access_token);
 
     // println!("{:#?}", mc_profile);
-
     let mc_account = MCAccount {
         xsts_response,
         mc_profile
     };
+    let username = mc_account.mc_profile.name.clone();
 
-    println!("{:#?}", mc_account);
-
-    app_handle.emit_all("login_status", "Saving new account...").unwrap();
+    //println!("{:#?}", mc_account);
+    println!("Saving new Minecraft account...");
+    notify(&app_handle, "login_status", "Saving new account...", NotificationState::Running);
     if let Err(e) = save_new_account(mc_account) {
         println!("Error occured while saving new account: {e}")
     }
-    app_handle.emit_all("login_status", "Successfully added new account!").unwrap();
+
+    notify(&app_handle, "login_status", &String::from_iter(["Successfully added account \"", &username, "\"!"]), NotificationState::Success);
+    println!("Successfully added new account.");
 }
 
 
@@ -195,7 +215,7 @@ fn has_mc_ownership(client: &Client, access_token: &str) -> bool {
     .json()
     .unwrap();
     
-    println!("{:#?}", entitlements_response);
+    // println!("{:#?}", entitlements_response);
     entitlements_response.items.iter().any(|item| 
         item.name.eq_ignore_ascii_case("product_minecraft") || item.name.eq_ignore_ascii_case("game_minecraft")
     )
@@ -228,7 +248,7 @@ pub fn load_accounts() -> Result<Vec<MCProfile>, String> {
 }
 
 #[tauri::command]
-pub fn get_selected_account() -> i64 {
+pub fn get_selected_index() -> i64 {
     let accounts_json = config_dir().unwrap().join("yamcl").join(ACCOUNT_FILE_NAME);
     let json: Value = serde_json::from_str(&fs::read_to_string(accounts_json).unwrap()).unwrap();
 
@@ -240,11 +260,11 @@ pub fn get_selected_account() -> i64 {
 }
 
 #[tauri::command]
-pub fn set_selected_account(index: u64) {
+pub fn set_selected_index(index: u64) {
     let accounts_json = config_dir().unwrap().join("yamcl").join(ACCOUNT_FILE_NAME);
     let mut json: Value = serde_json::from_str(&fs::read_to_string(&accounts_json).unwrap()).unwrap();
     json["selectedIndex"] = json!(index);
-    fs::write(accounts_json, json.to_string()).unwrap();
+    fs::write(accounts_json, serde_json::to_string_pretty(&json).unwrap()).unwrap();
 }
 
 #[tauri::command]
@@ -255,6 +275,13 @@ pub fn remove_account(index: usize) {
     save_accounts(accounts).unwrap();
 }
 
+pub fn get_active_account() -> Result<MCAccount, Error> {
+    let accounts = get_accounts()?;
+    let index: usize = get_selected_index().try_into().unwrap_or(0);
+
+    Ok(accounts.into_iter().nth(index).unwrap())
+}
+
 fn get_accounts() -> Result<Vec<MCAccount>, Error> {
     let accounts_json = config_dir().unwrap().join("yamcl").join(ACCOUNT_FILE_NAME);
 
@@ -263,10 +290,10 @@ fn get_accounts() -> Result<Vec<MCAccount>, Error> {
 
         let json: Value = serde_json::from_str(&contents).unwrap();
         if contents.is_empty() || !json.is_object() || !json["accounts"].is_array() {
-            fs::write(accounts_json, json!({
+            fs::write(accounts_json, serde_json::to_string_pretty(&json!({
                 "accounts": [],
-                "selectedIndex": get_selected_account()
-            }).to_string())?;
+                "selectedIndex": get_selected_index()
+            }))?)?;
             Ok(Vec::new())
         } else {
             let accounts: Vec<MCAccount> = json["accounts"].as_array().unwrap().iter().map(|val| 
@@ -276,9 +303,9 @@ fn get_accounts() -> Result<Vec<MCAccount>, Error> {
         }
 
     } else {
-        fs::write(accounts_json, json!({
+        fs::write(accounts_json, serde_json::to_string_pretty(&json!({
             "accounts": []
-        }).to_string())?;
+        }))?)?;
         Ok(Vec::new())
     }
 }
@@ -287,8 +314,9 @@ fn save_accounts(accounts: Vec<MCAccount>) -> Result<(), Error> {
     let accounts_json = config_dir().unwrap().join("yamcl").join(ACCOUNT_FILE_NAME);
     let json = json!({
         "accounts": accounts,
-        "selectedIndex": get_selected_account()
+        "selectedIndex": get_selected_index()
     });
-    fs::write(accounts_json, json.to_string())?;
+
+    fs::write(accounts_json, serde_json::to_string_pretty(&json).unwrap())?;
     Ok(())
 }

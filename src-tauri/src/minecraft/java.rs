@@ -21,11 +21,3 @@ pub fn get_java_version(path: String, args: String) -> Result<String, String> {
         }
     }
 }
-
-
-#[tauri::command]
-pub fn launch_instance(minecraft_path: String, java_path: String) {
-    println!("Launching: {}", minecraft_path);
-
-    let mut _process = Command::new(java_path).arg("--version").spawn().unwrap();
-}

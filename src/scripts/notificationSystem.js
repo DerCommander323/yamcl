@@ -20,7 +20,7 @@ let notifs = {}
  */
 export function createNotification(id, contents, status) {
     notifs[id] = { contents, status: status ?? 'running'}
-    updateNotifStore()
+    updateNotifs(status ?? 'running', id)
 }
 
 /**
@@ -31,11 +31,28 @@ export function createNotification(id, contents, status) {
 export function finishNotification(id, newContents, newStatus) {
     let status = newStatus ?? 'success'
     notifs[id] = { contents: newContents, status }
+    updateNotifs(status, id)
+}
+
+/**
+ * @param {string} id
+ */
+export function getNotification(id) {
+    return notifs[id]
+}
+
+/**
+ * @param {'running' | 'error' | 'success'} status
+ * @param {string} id
+ */
+function updateNotifs(status, id) {
     updateNotifStore()
-    setTimeout(async () => {
-        delete notifs[id]
-        updateNotifStore()
-    }, status === 'success' ? 2500 : 10000)
+    if(status === 'success' || status === 'error') {
+        setTimeout(() => {
+            delete notifs[id]
+            updateNotifStore()
+        }, status === 'success' ? 2500 : 10000)
+    }
 }
 
 function updateNotifStore() {

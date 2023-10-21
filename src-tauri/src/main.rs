@@ -6,11 +6,33 @@
 
 use std::{fs::{self}, path::Path};
 use tauri::{AppHandle, Manager};
+use authentication::{auth, auth_structs};
+use minecraft::{launching, java};
 
 mod instances;
-mod minecraft;
-mod authentication;
-mod auth_structs;
+mod minecraft {
+    pub mod launching;
+    pub mod java;
+    pub mod rules;
+}
+mod authentication { 
+    pub mod auth;
+    pub mod auth_structs;
+}
+
+#[derive(serde::Serialize, Clone)]
+struct Notification {
+    status: NotificationState,
+    text: String
+}
+#[derive(serde::Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub enum NotificationState {
+    Running,
+    Error,
+    Success
+}
+
 
 fn main() {
     tauri::Builder::default()
@@ -18,13 +40,13 @@ fn main() {
             get_instances,
             unlock_icons,
             file_exists,
-            minecraft::launch_instance,
-            minecraft::get_java_version,
-            authentication::get_selected_account,
-            authentication::set_selected_account,
-            authentication::remove_account,
-            authentication::load_accounts,
-            authentication::add_account
+            launching::launch_instance,
+            java::get_java_version,
+            auth::get_selected_index,
+            auth::set_selected_index,
+            auth::remove_account,
+            auth::load_accounts,
+            auth::add_account
         ])
         .run(tauri::generate_context!())
         .expect("Failed to start YAMCL!");
@@ -63,3 +85,9 @@ fn get_instances(path: String, app_handle: AppHandle) {
     app_handle.emit_all("instance_finish", instance_count).unwrap();
 }
 
+pub fn notify(app_handle: &AppHandle, name: &str, text: &str, status: NotificationState) {
+    app_handle.emit_all(
+        &String::from_iter(["notification_", name]),
+        Notification { text: text.to_string(), status }
+    ).unwrap()
+}

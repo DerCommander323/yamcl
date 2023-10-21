@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api";
 import { confirm } from "@tauri-apps/api/dialog";
 import { listen } from "@tauri-apps/api/event";
 import { writable } from "svelte/store";
-import { createNotification, finishNotification } from "./notificationSystem";
+import { createNotification, getNotification } from "./notificationSystem";
 
 
 
@@ -20,7 +20,7 @@ export function addAccount() {
  * @param {Number} index
  */
 export async function setSelectedIndex(index) {
-    await invoke('set_selected_account', { index })
+    await invoke('set_selected_index', { index })
     selectedIndex.set(index)
 }
 
@@ -55,7 +55,7 @@ export async function removeAccount(index, name) {
 
 export function loadAccounts() {
     console.log('Loading accounts...')
-    invoke('get_selected_account')
+    invoke('get_selected_index')
         .then(i => {
             selectedIndex.set(i)
             setPreviewIndex(i)
@@ -71,11 +71,13 @@ export function loadAccounts() {
         })
 }
 
-listen('login_status', event => {
-    if(event.payload === 'Successfully added new account!') {
-        finishNotification('login_status', event.payload, 'success')
-        loadAccounts()
-    } else {
-        createNotification('login_status', `Logging in: ${event.payload}`)
+listen('notification_login_status', event => {
+    // Hacky fixes for my stupid code
+    // But hey, it works
+    if (event.payload.text.includes('aborted') && !getNotification('login_status').contents.includes('Awaiting')) {
+        console.warn(getNotification('login_status').contents.includes('Awaiting'))
+        return
     }
+    createNotification('login_status', `Logging in: ${event.payload.text}`, event.payload.status)
+    if(event.payload.status === 'success') loadAccounts()
 })
