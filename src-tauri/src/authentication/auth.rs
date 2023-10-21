@@ -6,7 +6,7 @@ use serde_json::{json, Value};
 use tauri::{AppHandle, api::path::config_dir};
 use crate::{auth_structs::{MCAccount, MCProfile, Entitlements, MCResponse, XBLResponse, MSAResponse}, notify, NotificationState};
 
-const MS_CLIENT_ID: &str = ""; //MUST CHANGE THIS ONCE I GET MY OWN!!!!!!!!!!!!!!!!!!!!!!!!!!
+const MS_CLIENT_ID: &str = "5431ff2d-20f8-415b-aa2f-5218eba055ea"; // The Yet Another Minecraft Launcher client_id. If you fork this project, please make sure to use your own!
 const REDIRECT_PORT: u16 = 32301;
 
 const ACCOUNT_FILE_NAME: &str = "accounts.json";
@@ -15,7 +15,9 @@ fn get_login_url() -> String {
     String::from_iter([
         "https://login.live.com/oauth20_authorize.srf?client_id=",
         MS_CLIENT_ID,
-        "&prompt=select_account&cobrandid=8058f65d-ce06-4c30-9559-473c9275a65d&response_type=code",
+        "&prompt=select_account",
+        //"&cobrandid=8058f65d-ce06-4c30-9559-473c9275a65d",
+        "&response_type=code",
         "&scope=XboxLive.signin%20XboxLive.offline_access",
         "&redirect_uri=http%3A%2F%2F127.0.0.1%3A",
         &REDIRECT_PORT.to_string()
