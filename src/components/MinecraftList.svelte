@@ -1,14 +1,13 @@
 <div class="relative inline-block">
     <button on:click={() => { expanded = !expanded }} class="bg-[#222] p-1 flex flex-row { expanded ? "rounded-b-md " : "rounded-md" }" >
         <p class="w-7 duration-200 { expanded ? "-rotate-90" : ""}"> <IconArrow /> </p>
-        <p class="hover:underline { expanded ? "underline" : "" }"> { selected.version ?? text } </p>
+        <p class="hover:underline { expanded ? "underline" : "" }"> { selected.id ?? text } </p>
     </button>
     <div class="absolute bottom-full { expanded ? "border" : "" } border-[var(--bg-tertiary)] bg-[var(--bg-secondary)] hover:border-purple-700 w-full min-w-[6.9rem]">
         {#if expanded}
             <div class="filters text-sm">
                 <p> <input type="checkbox" bind:checked={filters.releases} class="mx-1"> Releases </p>
                 <p> <input type="checkbox" bind:checked={filters.snapshots} class="mx-1"> Snapshots </p>
-                <p> <input type="checkbox" bind:checked={filters.experiments} class="mx-1"> Experiments </p>
                 <p> <input type="checkbox" bind:checked={filters.betas} class="mx-1"> Betas </p>
                 <p> <input type="checkbox" bind:checked={filters.alphas} class="mx-1"> Alphas </p>
                 <div class="p-1">
@@ -20,7 +19,7 @@
                 {#if loaded}
                     {#each filteredVersions as v, i}
                         <li>
-                            <p on:click={()=>select(i)} on:keydown={()=>select(i)} class="hover:bg-[#333] cursor-pointer break-words"> {v.version} </p>
+                            <p on:click={()=>select(i)} on:keydown={()=>select(i)} class="hover:bg-[#333] cursor-pointer break-words"> {v.id} </p>
                         </li>
                     {/each}
                 {/if}
@@ -54,7 +53,6 @@
         name: '',
         releases: true,
         snapshots: false,
-        experiments: false,
         betas: false,
         alphas: false
     }
@@ -72,13 +70,11 @@
         if(mcVersions) {
             filteredVersions = mcVersions.versions.filter(v => {
                 return (
-                    v.version.toLowerCase().includes(filters.name.toLowerCase()) &&
+                    v.id.toLowerCase().includes(filters.name.toLowerCase()) &&
                     dateFilter(v) &&
                     (
                         (filters.releases && v.type=='release') ||
                         (filters.snapshots && v.type=='snapshot') ||
-                        (filters.snapshots && v.type=='old_snapshot') ||
-                        (filters.experiments && v.type=='experiment') ||
                         (filters.betas && v.type=='old_beta') ||
                         (filters.alphas && v.type=='old_alpha')
                     )

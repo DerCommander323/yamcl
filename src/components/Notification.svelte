@@ -10,7 +10,7 @@
     export let notif
 </script>
 
-<div transition:slide class="px-2 py-1 my-1 bg-[var(--bg-primary)] border rounded-lg duration-1000 text-lg flex max-w-[40vw]
+<div transition:slide|local class="px-2 py-1 my-1 bg-[var(--bg-primary)] border rounded-lg duration-1000 text-lg flex max-w-[40vw]
     {notif.status==='running' ? "border-[var(--bg-tertiary)]" : 
         notif.status==='success' ? "border-green-700" : "border-red-700" }"
 >

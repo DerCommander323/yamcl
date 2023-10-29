@@ -1,6 +1,6 @@
 <Topbar text="{currentInstance?.name}">
-    <div class="w-full py-3">
-        <button on:click={openFolder}>
+    <div class="w-full my-3 overflow-ellipsis overflow-hidden">
+        <button on:click={openFolder} class="break-all">
             ({currentInstance?.path})
         </button>
     </div>

@@ -9,7 +9,14 @@
 <div id="instanceContainer" class="h-fit bg-[var(--bg-primary)]">
     <ol id="instances" class="grid opacity-0">
         {#each $instanceStore as instance}
-            <InstanceTile name={instance.name} path={instance.path} icon={instance.icon} id={instance.id} />
+            <InstanceTile
+                name={instance.name}
+                path={instance.path}
+                icon={instance.icon}
+                id={instance.id}
+                modloader={instance.modloader.name}
+                version={instance.mc_version}
+            />
         {/each}
     </ol>
 </div>

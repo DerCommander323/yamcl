@@ -21,14 +21,14 @@
             <p class="w-full"> Java Settings </p>
         </button>
         {#if javaDropdownExtended}
-            <ul transition:slide id="javaList" class="px-2 py-0.5 m-1 rounded-md bg-[var(--bg-tertiary)]">
+            <ul transition:slide|local id="javaList" class="px-2 py-0.5 m-1 rounded-md bg-[var(--bg-tertiary)]">
                 {#each $javaStore as java, index}
                     <button on:click={() => { java.extended = !java.extended; java.mcExtended = false; }} class="my-1.5 flex flex-row w-full hover:underline { java.extended ? "underline" : ""}">
                         <p class="w-7 duration-200 {java.extended ? "rotate-90" : ""}"> <IconArrow /> </p>
                         {java.label}
                     </button>
                     {#if java.extended}
-                        <li transition:slide class="p-0.5 my-0.5 flex flex-col border border-[var(--bg-secondary)] hover:border-purple-600 rounded-md duration-150 bg-[var(--bg-secondary)]">
+                        <li transition:slide|local class="p-0.5 my-0.5 flex flex-col border border-[var(--bg-secondary)] hover:border-purple-600 rounded-md duration-150 bg-[var(--bg-secondary)]">
                             <div class="flex flex-row">
                                 <div on:click={()=>setJavaPath(index)} on:keydown={()=>setJavaPath(index)} class="flex flex-row w-fit cursor-pointer">
                                     <p class="p-1"> Path: </p>

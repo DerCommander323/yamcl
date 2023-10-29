@@ -13,9 +13,9 @@
                         class="p-1 rounded-md hover:bg-[var(--bg-tertiary)] inline-flex w-full cursor-pointer
                             { $previewIndex === index ? "bg-[var(--bg-tertiary)]" : ""}"
                         >
-                        <button class="h-5 w-5 duration-150 hover:text-green-500 " on:click={ _ => setSelectedIndex(index)}> <SelectIcon /> </button>
-                        <button class="h-5 w-5 mx-1 duration-150 hover:text-red-600" on:click={_ => removeAccount(index, account.name)}> <RemoveIcon /> </button>
-                        <p class="{ $selectedIndex === index ? "underline font-medium" : ""}"> { account.name } </p>
+                        <button class="h-5 w-5 duration-150 hover:text-green-500 " on:click={() => setSelectedIndex(index)}> <SelectIcon /> </button>
+                        <button class="h-5 w-5 mx-1 duration-150 hover:text-red-600" on:click={() => removeAccount(index, account.name)}> <RemoveIcon /> </button>
+                        <p class="{ $selectedIndex === index ? "underline font-medium" : "" }"> { account.name } </p>
                     </div>
                 {/each}
             {/if}
@@ -60,7 +60,5 @@
     async function setPI(index) {
         setPreviewIndex(index)
     }
-
-
-
+    
 </script>

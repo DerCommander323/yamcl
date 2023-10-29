@@ -9,11 +9,12 @@ use tauri::{AppHandle, Manager};
 use authentication::{auth, auth_structs};
 use minecraft::{launching, java};
 
-mod instances;
 mod minecraft {
     pub mod launching;
     pub mod java;
     pub mod rules;
+    pub mod modloaders;
+    pub mod instances;
 }
 mod authentication { 
     pub mod auth;
@@ -75,8 +76,8 @@ fn get_instances(path: String, app_handle: AppHandle) {
 
             for file in instance_contents {
                 match file.unwrap().file_name().into_string().unwrap().as_ref() {
-                    "minecraftinstance.json" => {instances::handle_instance_cf(instance_folder, app_handle.clone()); instance_count += 1; break;},
-                    "instance.cfg" => {instances::handle_instance_mmc(instance_folder, app_handle.clone()); instance_count += 1; break;},
+                    "minecraftinstance.json" => {minecraft::instances::handle_instance_cf(instance_folder, app_handle.clone()); instance_count += 1; break;},
+                    "instance.cfg" => {minecraft::instances::handle_instance_mmc(instance_folder, app_handle.clone()); instance_count += 1; break;},
                     _ => continue
                 }   
             }

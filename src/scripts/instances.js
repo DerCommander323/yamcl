@@ -5,14 +5,13 @@ import { convertFileSrc } from "@tauri-apps/api/tauri"
 import { join } from "@tauri-apps/api/path"
 import { writable } from "svelte/store"
 import { createNotification, finishNotification } from "./notificationSystem"
-import { exists } from "@tauri-apps/api/fs"
 
 /**
- * @type {import("svelte/store").Writable<{name:string,icon:string,path:string,id:0,last_played:Date,last_played_epoch:0,last_played_string:string}[]>}
+ * @type {import("svelte/store").Writable<{name: string, icon: string, path: string, id: number, last_played: Date, modloader: {name: string, version: string}, mc_version: string}[]>}
  */
 export const instanceStore = writable([])
 /**
- * @type {{name:string,icon:string,path:string,id:0,last_played:Date,last_played_epoch:0,last_played_string:string}[]}
+ * @type {{name: string, icon: string, path: string, id: number, last_played: Date, modloader: {name: string, version: string}, mc_version: string}[]}
  */
 let instanceList = []
 export let instancesFinished = false
@@ -47,7 +46,7 @@ export async function gatherInstances() {
         const default_icon = 'default_instance.png'
         let ic = event.payload.icon
 
-        if(ic=='' || ic=='curse:666' || prismIcons.includes(ic)) {
+        if(ic==='' || ic==='curse:666' || prismIcons.includes(ic)) {
             event.payload.icon = default_icon
         } else if(ic.startsWith("https://media.forgecdn.net")) {
             //do nothing
@@ -63,7 +62,7 @@ export async function gatherInstances() {
         }
 
         //Date handling
-        event.payload.last_played = new Date(event.payload.last_played_epoch>0 ? event.payload.last_played_epoch : event.payload.last_played_string)
+        event.payload.last_played = new Date(event.payload.last_played['Epoch'] ?? event.payload.last_played['String'])
         
         instanceList.push(event.payload)
     })
@@ -90,6 +89,5 @@ listen('instance_finish', async (event) => {
  * @param {String} mcPath
  */
 export async function launchInstance(mcPath) {
-    
     invoke('launch_instance', { minecraftPath: mcPath, javaPath: 'java' })
 }
