@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api";
 import { open, confirm } from "@tauri-apps/api/dialog";
 import { writable } from "svelte/store";
 // @ts-ignore
-import { minecraftVersionList } from "./versions";
+import { getMinecraftVersions, minecraftVersionList } from "./versions";
 import { changeSetting, getSetting } from "./settings";
 import { createNotification, finishNotification } from "./notificationSystem";
 
@@ -103,7 +103,7 @@ export async function testJavaVersion(index) {
 /**
 * @param {string} path The Java binary path
 * @param {string} args Args to run it with
-* @returns {Promise<string>} The 'java --version' output if successful
+* @returns {Promise<string>} The 'java -version' output if successful
 */
 export async function getJavaVersion(path, args) {
     return new Promise((resolve, reject) => {
@@ -115,6 +115,30 @@ export async function getJavaVersion(path, args) {
             })
             .catch(_ => reject(`Failed to get java version for ${path}!`))
     })
+}
+
+/**
+ * @param {string} mcVer The requested Minecraft version
+ * @returns {Promise<string>} The Java version to use for mc_ver
+ */
+export async function getJavaForVersion(mcVer) {
+
+    await getJavaSettings()
+    let mcVersions = await getMinecraftVersions()
+    let releaseTime = new Date(mcVersions.versions.find(v => v.id == mcVer)?.releaseTime ?? 0).getTime()
+    if(releaseTime === 0) return Promise.reject("Invalid Minecraft Version!")
+    
+    let java = javaSettings.find((java) => {
+        let maxTime = new Date(java.mcVersions.max.releaseTime).getTime()
+        let minTime = new Date(java.mcVersions.min.releaseTime).getTime()
+
+        return maxTime >= releaseTime && minTime <= releaseTime
+    })
+    if(java) {
+        return Promise.resolve(java.path)
+    } else {
+        return Promise.reject("Could not find Java version to use for this instance!")
+    }
 }
 
 /**

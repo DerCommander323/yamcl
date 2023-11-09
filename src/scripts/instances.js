@@ -5,6 +5,7 @@ import { convertFileSrc } from "@tauri-apps/api/tauri"
 import { join } from "@tauri-apps/api/path"
 import { writable } from "svelte/store"
 import { createNotification, finishNotification } from "./notificationSystem"
+import { getJavaForVersion } from "./javas"
 
 /**
  * @type {import("svelte/store").Writable<{name: string, icon: string, path: string, id: number, last_played: Date, modloader: {name: string, version: string}, mc_version: string}[]>}
@@ -87,7 +88,17 @@ listen('instance_finish', async (event) => {
 
 /**
  * @param {String} mcPath
+ * @param {String} instanceName
+ * @param {String} mcVer
  */
-export async function launchInstance(mcPath) {
-    invoke('launch_instance', { minecraftPath: mcPath, javaPath: 'java' })
+export async function launchInstance(mcPath, instanceName, mcVer) {
+    console.log(`Launching instance: ${instanceName}...`)
+    createNotification(`instance_launch_${mcPath}`, `Launching '${instanceName}'...`)
+    getJavaForVersion(mcVer).then(javaPath => {
+        console.log(`Using java path: ${javaPath}`)
+        invoke('launch_instance', { minecraftPath: mcPath, versionId: mcVer, javaPath })
+    }).catch(e => {
+        finishNotification(`instance_launch_${mcPath}`, `Failed to get Java version for Minecraft version ${mcVer}!`, 'error')
+        console.error(e)
+    })
 }

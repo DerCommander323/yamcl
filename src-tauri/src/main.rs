@@ -12,9 +12,10 @@ use minecraft::{launching, java};
 mod minecraft {
     pub mod launching;
     pub mod java;
-    pub mod rules;
+    pub mod libraries;
     pub mod modloaders;
     pub mod instances;
+    pub mod versions;
 }
 mod authentication { 
     pub mod auth;

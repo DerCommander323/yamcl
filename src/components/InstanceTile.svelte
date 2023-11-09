@@ -12,7 +12,10 @@
      */
     export let path
     export let modloader = "Unknown"
-    export let version = "0"
+    /**
+     * @type {string}
+     */
+    export let version
 
     let hover = false
     let buttonHover = false
@@ -20,7 +23,7 @@
     let errorCount = 0
 
     const launch = () => {
-        launchInstance(path)
+        launchInstance(path, name, version)
     }
 
     

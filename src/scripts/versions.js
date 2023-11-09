@@ -1,6 +1,3 @@
-
-
-
 /**
  * @type {{
  *      latest: {
@@ -19,7 +16,6 @@
  * }}
  */
 export let minecraftVersionList
-
 
 
 export async function getMinecraftVersions() {
