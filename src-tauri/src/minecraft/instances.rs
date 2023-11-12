@@ -97,7 +97,7 @@ pub fn handle_instance_mmc(dir: DirEntry, app_handle: AppHandle) {
     emit_instance_create(app_handle, SimpleInstance {
         name: if let Some(name) = config.get("default","name") { name } else { String::from("Instance name not found!") },
         icon: if let Some(icon) = config.get("default","iconKey") { icon } else { String::from("default") },
-        path: dir.path().to_string_lossy().to_string(),
+        path: dir.path().join(".minecraft").to_string_lossy().to_string(),
         id: get_or_create_instance_id(dir),
         mc_version: {
             components.iter().filter(|ver| {

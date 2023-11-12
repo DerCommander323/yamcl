@@ -53,11 +53,16 @@ export async function gatherInstances() {
             //do nothing
         } else if(ic.startsWith('curse:')) {
             console.log(`Fetching Icon for project ID ${ic.split(':')[1]} from CurseRinth...`)
-            let apiReqeust = await fetch(`https://curserinth-api.kuylar.dev/v2/project/${ic.split(':')[1]}`)
-            apiReqeust.json().then(json => {
-                console.log(json.icon_url)
-                event.payload.icon = json.icon_url
-            })
+            try {
+                let apiReqeust = await fetch(`https://curserinth-api.kuylar.dev/v2/project/${ic.split(':')[1]}`)
+
+                apiReqeust.json().then(json => {
+                    console.log(json.icon_url)
+                    event.payload.icon = json.icon_url
+                })
+            } catch (e) {
+                console.error(`Failed to make icon request: ${e}`)
+            }
         } else {
             event.payload.icon = iconPath ? convertFileSrc(await join(iconPath, ic)) : default_icon
         }

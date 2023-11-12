@@ -4,8 +4,10 @@
     windows_subsystem = "windows"
 )]
 
-use std::{fs::{self}, path::Path};
-use tauri::{AppHandle, Manager};
+use std::{fs::{self, create_dir_all}, path::{Path, PathBuf}, io::Cursor};
+use reqwest::blocking::Client;
+use sha1_smol::Sha1;
+use tauri::{AppHandle, Manager, api::path::data_dir};
 use authentication::{auth, auth_structs};
 use minecraft::{launching, java};
 
@@ -93,3 +95,29 @@ pub fn notify(app_handle: &AppHandle, name: &str, text: &str, status: Notificati
         Notification { text: text.to_string(), status }
     ).unwrap()
 }
+
+/// Checks if the checksum of the file at `path` matches `checksum` and downloads it from `url` if not.
+pub fn download_file_checked(client: &Client, checksum: &String, path: &PathBuf, url: &String) {
+    println!("Checking file at: {}", path.to_string_lossy());
+    if !path.is_file() || {
+        let contents_checksum = Sha1::from(fs::read(&path).unwrap()).digest().to_string();
+        println!("{} vs {}", contents_checksum, checksum);
+        &contents_checksum != checksum
+    } {
+        download_file(client, path, url)
+    }
+}
+
+fn download_file(client: &Client, path: &PathBuf, url: &String) {
+    println!("Downloading file: {}", url);
+    let response = client.get(url).send().unwrap();
+    create_dir_all(path.parent().unwrap()).unwrap();
+    let mut file = std::fs::File::create(path).unwrap();
+    let mut content = Cursor::new(response.bytes().unwrap());
+    std::io::copy(&mut content, &mut file).unwrap();
+}
+
+pub fn get_data_dir() -> PathBuf { data_dir().unwrap().join("yamcl") }
+pub fn get_client_jar_dir() -> PathBuf { get_data_dir().join("client_jars") }
+pub fn get_library_dir() -> PathBuf { get_data_dir().join("libraries") }
+pub fn get_log4j_dir() -> PathBuf { get_data_dir().join("log4j_configs") }

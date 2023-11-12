@@ -2683,6 +2683,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha1_smol"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae1a47186c03a32177042e55dbc5fd5aee900b8e0069a8d70fba96a9375cd012"
+
+[[package]]
 name = "sha2"
 version = "0.10.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4143,7 +4149,7 @@ dependencies = [
 
 [[package]]
 name = "yamcl"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "afire",
  "configparser",
@@ -4151,6 +4157,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "sha1_smol",
  "tauri",
  "tauri-build",
  "uuid",

@@ -3,6 +3,7 @@ use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MCAccount {
     pub xsts_response: XBLResponse,
+    pub mc_response: MCResponse,
     pub mc_profile: MCProfile
 }
 

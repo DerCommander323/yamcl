@@ -189,6 +189,7 @@ fn add_account_code(code: &str, app_handle: &AppHandle) {
     // println!("{:#?}", mc_profile);
     let mc_account = MCAccount {
         xsts_response,
+        mc_response,
         mc_profile
     };
     let username = mc_account.mc_profile.name.clone();

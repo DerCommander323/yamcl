@@ -1,6 +1,6 @@
 [package]
 name = "yamcl"
-version = "0.1.0"
+version = "0.3.0"
 description = "Yet Another MC Launcher"
 authors = ["dercommander323"]
 license = "GPL-3.0-only"
@@ -23,6 +23,7 @@ uuid = { version = "1.4.1", features = ["v4", "fast-rng"] }
 configparser = "3.0.2"
 afire = "2.2.1"
 fastrand = "2.0.0"
+sha1_smol = "1.0.0"
 
 [features]
 # by default Tauri runs in production mode

@@ -1,6 +1,39 @@
+use std::path::PathBuf;
+
+use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::{download_file_checked, get_library_dir};
+
+impl MCLibrary {
+    pub fn get_path(&self) -> PathBuf {
+        if let Some(artifact) = &self.downloads.artifact {
+            get_library_dir().join(&artifact.path)
+        } else if let Some(classifiers) = &self.downloads.classifiers {
+            let natives = if cfg!(windows) {
+                &classifiers.natives_windows
+            } else if cfg!(macos) {
+                &classifiers.natives_osx
+            } else {
+                &classifiers.natives_linux // in the hopes of these natives working on platforms like OpenBSD too (probably not)
+            };
+            get_library_dir().join(&natives.as_ref().unwrap().path)
+        } else {
+            PathBuf::new()
+        }
+    }
+
+    pub fn download_checked(&self, client: &Client) {
+        if let Some(artifact) = &self.downloads.artifact {
+            download_file_checked(
+                &client,
+                &artifact.sha1,
+                &self.get_path(),
+                &artifact.url)
+        }
+    }
+}
 
 impl MCRule {
     pub fn applies(&self) -> bool {
@@ -32,16 +65,16 @@ impl MCRule {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MCLibrary {
-    downloads: MCLibraryDownloads,
-    name: String,
-    rules: Option<Vec<MCRule>>,
-    natives: Option<Value>
+    pub downloads: MCLibraryDownloads,
+    pub name: String,
+    pub rules: Option<Vec<MCRule>>,
+    pub natives: Option<Value>
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MCLibraryDownloads {
     artifact: Option<MCLibraryDownloadsArtifacts>,
-    classifiers: Option<Value>
+    classifiers: Option<MCLibraryDownloadsClassifiers>
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -50,6 +83,14 @@ pub struct MCLibraryDownloadsArtifacts {
     url: String,
     size: u32,
     sha1: String
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct MCLibraryDownloadsClassifiers {
+    natives_linux: Option<MCLibraryDownloadsArtifacts>,
+    natives_osx: Option<MCLibraryDownloadsArtifacts>,
+    natives_windows: Option<MCLibraryDownloadsArtifacts>
 }
 
 #[derive(Debug, Serialize, Deserialize)]

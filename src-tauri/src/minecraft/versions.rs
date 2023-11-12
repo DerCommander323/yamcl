@@ -1,5 +1,9 @@
+use std::{iter, path::PathBuf};
+
 use reqwest::blocking::Client;
 use serde::{Serialize, Deserialize};
+
+use crate::{get_client_jar_dir, download_file_checked, get_log4j_dir};
 
 use super::libraries::{MCLibrary, MCRule};
 
@@ -36,12 +40,13 @@ impl MCExtendedVersion {
             Err(e) => {
                 println!("Failed to get extended Minecraft version info: {e}");
                 None
-            },
+            }
         }
     }
 
-    pub fn get_jvm_args(&self) -> Vec<String> {
+    pub fn get_jvm_args(&self, client: &Client) -> Vec<String> {
         let mut final_args: Vec<String> = Vec::new();
+
         if let Some(args) = self.arguments.as_ref() {
             for arg in args.jvm.iter() {
                 match arg {
@@ -50,20 +55,106 @@ impl MCExtendedVersion {
                         if rule.rules.iter().all(MCRule::applies) {
                             match &rule.value {
                                 MCValue::String(string) => final_args.push(string.to_string()),
-                                MCValue::StringList(string_list) => final_args.append(&mut string_list.clone()),
+                                MCValue::StringList(string_list) => final_args.append(&mut string_list.clone())
                             }
                         }
                     }
                 }
             }
         }
+
+        if !final_args.iter().any(|arg| arg.contains("-cp")) {
+            final_args.append(&mut vec!["-cp".to_string(), "${classpath}".to_string()])
+        }
+
+        if let Some(config) = self.get_log4j_config(client) {
+            final_args.push(config.0.replace("${path}", &config.1.to_string_lossy().to_string()))
+        }
+
         final_args
     }
+
     pub fn get_game_args(&self) -> Vec<String> {
-        Vec::new()
+        let mut final_args: Vec<String> = Vec::new();
+
+        match &self.arguments {
+            Some(args) => {
+                for arg in args.game.iter() {
+                    match arg {
+                        MCGameArg::GameArg(string) => final_args.push(string.to_string()),
+                        MCGameArg::GameRule(rule) => {
+                            if rule.rules.iter().all(MCRule::applies) {
+                                match &rule.value {
+                                    MCValue::String(string) => final_args.push(string.to_string()),
+                                    MCValue::StringList(string_list) => final_args.append(&mut string_list.clone()),
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            None => if let Some(args_string) = &self.minecraft_arguments {
+                let mut args: Vec<String> = args_string.split_whitespace().map(String::from).collect();
+                final_args.append(&mut args);
+            } else {
+                panic!("No arguments found in this version manifest???")
+            }
+        }
+
+        final_args
+    }
+
+    pub fn get_classpath(&self, client: &Client) -> String {
+        let libraries: Vec<&MCLibrary> = self.libraries
+            .iter()
+            .filter(|&lib| if let Some(rules) = &lib.rules {
+                rules.iter().all(MCRule::applies)
+            } else { true })
+            .collect();
+
+        for lib in &libraries {
+            lib.download_checked(&client)
+        }
+
+        libraries.iter()
+            .map(|&lib| {
+                lib.get_path().to_string_lossy().to_string()
+            })
+            .chain(iter::once(
+                self.get_client_jar(&client).to_string_lossy().to_string()
+            ))
+            .collect::<Vec<String>>()
+            .join(if cfg!(windows) { ";" } else { ":" })
+    }
+
+    pub fn get_main_class(&self) -> String {
+        self.main_class.to_string()
+    }
+
+    pub fn get_client_jar(&self, client: &Client) -> PathBuf {
+        let path = get_client_jar_dir().join(format!("{}.jar", self.id));
+        download_file_checked(
+            client,
+            &self.downloads.client.sha1,
+            &path,
+            &self.downloads.client.url
+        );
+        path
+    }
+
+    pub fn get_log4j_config(&self, client: &Client) -> Option<(String, PathBuf)> {
+        if let Some(logging) = &self.logging {
+            let path = get_log4j_dir().join(&logging.client.file.id);
+            download_file_checked(
+                client,
+                &logging.client.file.sha1,
+                &path,
+                &logging.client.file.url
+            );
+            Some((logging.client.argument.to_string(), path))
+        } else { None }
     }
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MCVersionList {
@@ -94,22 +185,22 @@ pub struct MCLatest {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MCExtendedVersion {
-    arguments: Option<MCArguments>,
-    minecraft_arguments: Option<String>,
-    asset_index: MCAssetIndex,
-    assets: String,
-    compliance_level: u16,
-    downloads: MCDownloads,
-    id: String,
-    java_version: MCJavaVersion,
-    libraries: Vec<MCLibrary>,
-    main_class: String,
-    minimum_launcher_version: u16,
-    release_time: String,
-    time: String,
-    logging: Option<MCLogging>,
+    pub arguments: Option<MCArguments>,
+    pub minecraft_arguments: Option<String>,
+    pub asset_index: MCAssetIndex,
+    pub assets: String,
+    pub compliance_level: u16,
+    pub downloads: MCDownloads,
+    pub id: String,
+    pub java_version: MCJavaVersion,
+    pub libraries: Vec<MCLibrary>,
+    pub main_class: String,
+    pub minimum_launcher_version: u16,
+    pub release_time: String,
+    pub time: String,
+    pub logging: Option<MCLogging>,
     #[serde(rename = "type")]
-    typ: String,
+    pub typ: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -154,7 +245,7 @@ pub enum MCValue {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MCAssetIndex {
-    id: String,
+    pub id: String,
     url: String,
     size: u64,
     total_size: u64,
