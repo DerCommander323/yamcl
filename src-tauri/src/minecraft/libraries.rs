@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use reqwest::blocking::Client;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -24,13 +24,14 @@ impl MCLibrary {
         }
     }
 
-    pub fn download_checked(&self, client: &Client) {
+    pub async fn download_checked(&self, client: &Client) {
         if let Some(artifact) = &self.downloads.artifact {
             download_file_checked(
                 &client,
                 &artifact.sha1,
                 &self.get_path(),
-                &artifact.url)
+                &artifact.url
+            ).await
         }
     }
 }

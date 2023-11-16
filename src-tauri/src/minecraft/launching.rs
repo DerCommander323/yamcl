@@ -1,8 +1,9 @@
 use std::process::Command;
 
-use reqwest::blocking::Client;
+use reqwest::Client;
+use tauri::AppHandle;
 
-use crate::{auth::get_active_account, minecraft::versions::MCExtendedVersion, authentication::auth_structs::MCAccount};
+use crate::{auth::get_active_account, minecraft::versions::MCExtendedVersion, authentication::auth_structs::MCAccount, notify, NotificationState};
 
 use super::versions::MCCompactVersion;
 
@@ -13,40 +14,55 @@ struct Args {
     main_class: String
 }
 
-#[tauri::command]
-pub fn launch_instance(minecraft_path: String, version_id: String, java_path: String) -> Result<(), String> {
-    println!("Launching: {minecraft_path}, Version: {version_id}");
+#[tauri::command(async)]
+pub async fn launch_instance(minecraft_path: String, version_id: String, java_path: String, additional_args: String, instance_id: u32, app_handle: AppHandle) -> Result<(), String> {
+    println!("Launching: {minecraft_path}, Version: {version_id}, id: {instance_id}");
 
-    let args = get_arguments(version_id, minecraft_path.clone())?;
+    let args = get_arguments(version_id, minecraft_path.clone()).await?;
 
-    println!("Args: {:#?}", args);
+    println!("Args: {:#?}\nCustom Args: {}", args, additional_args);
     println!("Launching NOW!");
 
     let mut process = Command::new(java_path)
-    .current_dir(minecraft_path)
+    .current_dir(minecraft_path.clone())
+    .args(additional_args.split_whitespace())
     .args(args.jvm)
     .arg(args.main_class)
     .args(args.game)
     .spawn()
     .or_else(|err| Err(format!("Failed to run Minecraft command: {}", err.to_string())))?;
 
-    process.wait().expect("Failed to wait on Java process! How did this happen?");
+    notify(&app_handle, &format!("notification_{}_status", instance_id), "Instance launched successfully!", NotificationState::Success);
+
+    let exit_status = process.wait().expect("Failed to wait on Java process! How did this happen?");
+    println!("Exited with status: {}", exit_status);
+
+    if exit_status.success() {
+        println!("{minecraft_path} exited successfully.");
+        notify(&app_handle, &format!("notification_{}_status", instance_id), "Instance exited successfully.", NotificationState::Success);
+    } else {
+        println!("{minecraft_path} exited (crashed) with status {}", exit_status);
+        notify(&app_handle, &format!("notification_{}_status", instance_id), &format!("Instance crashed with code {}", exit_status.code().unwrap_or(323)), NotificationState::Error);
+    }
+
     Ok(())
 }
 
-fn get_arguments(version_id: String, minecraft_path: String) -> Result<Args, String> {
+async fn get_arguments(version_id: String, minecraft_path: String) -> Result<Args, String> {
     let client = Client::new();
     let account = get_active_account()
         .or(Err("Could not get the selected account!".to_string()))?;
 
     println!("Getting compact version info for {version_id}");
     let compact_version = MCCompactVersion::from_id(version_id, &client)
+        .await
         .ok_or("Could not get compact Minecraft version details!".to_string())?;
 
     println!("Got compact version info: {:?}", compact_version);
     println!("Getting extended version info from {}", compact_version.url);
 
     let version = MCExtendedVersion::from_compact(compact_version, &client)
+        .await
         .ok_or("Could not get extended Minecraft version details!".to_string())?;
 
     println!("Got extended version info. (not listed due to length)");
@@ -54,7 +70,7 @@ fn get_arguments(version_id: String, minecraft_path: String) -> Result<Args, Str
     Ok(
         parse_arguments(
             Args {
-                jvm: version.get_jvm_args(&client),
+                jvm: version.get_jvm_args(&client).await,
                 game: version.get_game_args(),
                 main_class: version.get_main_class()
             },
@@ -62,11 +78,11 @@ fn get_arguments(version_id: String, minecraft_path: String) -> Result<Args, Str
             version,
             minecraft_path,
             &client
-        )
+        ).await
     )
 }
 
-fn parse_arguments(args_struct: Args, account: MCAccount, version: MCExtendedVersion, minecraft_path: String, client: &Client) -> Args {
+async fn parse_arguments(args_struct: Args, account: MCAccount, version: MCExtendedVersion, minecraft_path: String, client: &Client) -> Args {
     let replacements = vec![
         ("${auth_player_name}", account.mc_profile.name),
         ("${auth_uuid}", account.mc_profile.id),
@@ -74,7 +90,7 @@ fn parse_arguments(args_struct: Args, account: MCAccount, version: MCExtendedVer
         ("${auth_xuid}", account.xsts_response.display_claims.xui[0].uhs.to_string()), // idk what else a "xuid" could be
         ("${user_properties}", "something".to_string()),
 
-        ("${classpath}", version.get_classpath(client)),
+        ("${classpath}", version.get_classpath(client).await),
         ("${version_name}", version.id.replace(' ', "_").replace(':', "_")),
         ("${assets_index_name}", version.asset_index.id),
         ("${assets_root}", "/home/der/.local/share/PrismLauncher/assets".to_string()),

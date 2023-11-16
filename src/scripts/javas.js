@@ -119,7 +119,7 @@ export async function getJavaVersion(path, args) {
 
 /**
  * @param {string} mcVer The requested Minecraft version
- * @returns {Promise<string>} The Java version to use for mc_ver
+ * @returns {Promise<any>} The Java version to use for mc_ver
  */
 export async function getJavaForVersion(mcVer) {
 
@@ -135,7 +135,7 @@ export async function getJavaForVersion(mcVer) {
         return maxTime >= releaseTime && minTime <= releaseTime
     })
     if(java) {
-        return Promise.resolve(java.path)
+        return Promise.resolve(java)
     } else {
         return Promise.reject("Could not find Java version to use for this instance!")
     }

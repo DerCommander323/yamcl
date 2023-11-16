@@ -68,7 +68,7 @@
       }
     },
     "security": {
-      "csp": "default-src https://* tauri://* asset://*; img-src https://* tauri://* asset://* file://*; asset https://asset.localhost; style-src * 'unsafe-inline';"
+      "csp": "default-src https://* tauri://* asset://*; img-src https://* http://textures.minecraft.net/texture/* tauri://* asset://* file://*; asset https://asset.localhost; style-src * 'unsafe-inline';"
     },
     "updater": {
       "active": false

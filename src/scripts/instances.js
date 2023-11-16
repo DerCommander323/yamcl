@@ -95,15 +95,22 @@ listen('instance_finish', async (event) => {
  * @param {String} mcPath
  * @param {String} instanceName
  * @param {String} mcVer
+ * @param {Number} instanceId
  */
-export async function launchInstance(mcPath, instanceName, mcVer) {
+export async function launchInstance(mcPath, instanceName, mcVer, instanceId) {
     console.log(`Launching instance: ${instanceName}...`)
-    createNotification(`instance_launch_${mcPath}`, `Launching '${instanceName}'...`)
-    getJavaForVersion(mcVer).then(javaPath => {
-        console.log(`Using java path: ${javaPath}`)
-        invoke('launch_instance', { minecraftPath: mcPath, versionId: mcVer, javaPath })
+    createNotification(`instance_launch_${instanceId}`, `Launching '${instanceName}'...`)
+    getJavaForVersion(mcVer).then(async java => {
+        console.log(`Using java path: ${java.path}, with args ${java.args}`)
+        const unlisten = await listen(`notification_${instanceId}_status`, event => {
+            console.warn(event)
+            finishNotification(`notification_${instanceId}_status`, event.payload.text, event.payload.status)
+        })
+        await invoke('launch_instance', { minecraftPath: mcPath, versionId: mcVer, javaPath: java.path, additionalArgs: java.args, instanceId })
+        console.warn("i tihnk it done")
     }).catch(e => {
-        finishNotification(`instance_launch_${mcPath}`, `Failed to get Java version for Minecraft version ${mcVer}!`, 'error')
+        finishNotification(`instance_launch_${instanceId}`, `Failed to get Java version for Minecraft version ${mcVer}!`, 'error')
         console.error(e)
     })
 }
+

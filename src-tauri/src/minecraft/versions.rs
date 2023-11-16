@@ -1,6 +1,6 @@
 use std::{iter, path::PathBuf};
 
-use reqwest::blocking::Client;
+use reqwest::Client;
 use serde::{Serialize, Deserialize};
 
 use crate::{get_client_jar_dir, download_file_checked, get_log4j_dir};
@@ -11,8 +11,8 @@ const VERSION_URL: &str = "https://piston-meta.mojang.com/mc/game/version_manife
 
 
 impl MCVersionList {
-    pub fn get(client: &Client) -> Option<Self> {
-        let version_list: Result<MCVersionList, reqwest::Error> = client.get(VERSION_URL).send().unwrap().json();
+    pub async fn get(client: &Client) -> Option<Self> {
+        let version_list: Result<MCVersionList, reqwest::Error> = client.get(VERSION_URL).send().await.unwrap().json().await;
         match version_list {
             Ok(list) => Some(list),
             Err(e) => {
@@ -24,8 +24,8 @@ impl MCVersionList {
 }
 
 impl MCCompactVersion {
-    pub fn from_id(version_id: String, client: &Client) -> Option<Self> {
-        let version_list = MCVersionList::get(client)?;
+    pub async fn from_id(version_id: String, client: &Client) -> Option<Self> {
+        let version_list = MCVersionList::get(client).await?;
         version_list.versions.into_iter().find(|ver| {
             ver.id == version_id
         })
@@ -33,8 +33,8 @@ impl MCCompactVersion {
 }
 
 impl MCExtendedVersion {
-    pub fn from_compact(compact_version: MCCompactVersion, client: &Client) -> Option<Self> {
-        let extended_version: Result<MCExtendedVersion, reqwest::Error> = client.get(compact_version.url).send().unwrap().json();
+    pub async fn from_compact(compact_version: MCCompactVersion, client: &Client) -> Option<Self> {
+        let extended_version: Result<MCExtendedVersion, reqwest::Error> = client.get(compact_version.url).send().await.unwrap().json().await;
         match extended_version {
             Ok(ver) => Some(ver),
             Err(e) => {
@@ -44,7 +44,7 @@ impl MCExtendedVersion {
         }
     }
 
-    pub fn get_jvm_args(&self, client: &Client) -> Vec<String> {
+    pub async fn get_jvm_args(&self, client: &Client) -> Vec<String> {
         let mut final_args: Vec<String> = Vec::new();
 
         if let Some(args) = self.arguments.as_ref() {
@@ -67,7 +67,7 @@ impl MCExtendedVersion {
             final_args.append(&mut vec!["-cp".to_string(), "${classpath}".to_string()])
         }
 
-        if let Some(config) = self.get_log4j_config(client) {
+        if let Some(config) = self.get_log4j_config(client).await {
             final_args.push(config.0.replace("${path}", &config.1.to_string_lossy().to_string()))
         }
 
@@ -104,7 +104,7 @@ impl MCExtendedVersion {
         final_args
     }
 
-    pub fn get_classpath(&self, client: &Client) -> String {
+    pub async fn get_classpath(&self, client: &Client) -> String {
         let libraries: Vec<&MCLibrary> = self.libraries
             .iter()
             .filter(|&lib| if let Some(rules) = &lib.rules {
@@ -113,7 +113,7 @@ impl MCExtendedVersion {
             .collect();
 
         for lib in &libraries {
-            lib.download_checked(&client)
+            lib.download_checked(&client).await
         }
 
         libraries.iter()
@@ -121,7 +121,7 @@ impl MCExtendedVersion {
                 lib.get_path().to_string_lossy().to_string()
             })
             .chain(iter::once(
-                self.get_client_jar(&client).to_string_lossy().to_string()
+                self.get_client_jar(&client).await.to_string_lossy().to_string()
             ))
             .collect::<Vec<String>>()
             .join(if cfg!(windows) { ";" } else { ":" })
@@ -131,18 +131,18 @@ impl MCExtendedVersion {
         self.main_class.to_string()
     }
 
-    pub fn get_client_jar(&self, client: &Client) -> PathBuf {
+    pub async fn get_client_jar(&self, client: &Client) -> PathBuf {
         let path = get_client_jar_dir().join(format!("{}.jar", self.id));
         download_file_checked(
             client,
             &self.downloads.client.sha1,
             &path,
             &self.downloads.client.url
-        );
+        ).await;
         path
     }
 
-    pub fn get_log4j_config(&self, client: &Client) -> Option<(String, PathBuf)> {
+    pub async fn get_log4j_config(&self, client: &Client) -> Option<(String, PathBuf)> {
         if let Some(logging) = &self.logging {
             let path = get_log4j_dir().join(&logging.client.file.id);
             download_file_checked(
@@ -150,7 +150,7 @@ impl MCExtendedVersion {
                 &logging.client.file.sha1,
                 &path,
                 &logging.client.file.url
-            );
+            ).await;
             Some((logging.client.argument.to_string(), path))
         } else { None }
     }

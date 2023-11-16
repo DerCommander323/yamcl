@@ -21,7 +21,10 @@
     const currentInstance = $instanceStore.find(e => {return e.id.toString() == currentId})
     
     function launch() {
-        if(currentInstance) launchInstance(currentInstance.path)
+        if(currentInstance) {
+            let { path, name, mc_version, id } = currentInstance
+            launchInstance(path, name, mc_version, id)
+        }
     }
 
     function openFolder() {

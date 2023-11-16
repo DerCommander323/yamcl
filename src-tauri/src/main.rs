@@ -5,7 +5,7 @@
 )]
 
 use std::{fs::{self, create_dir_all}, path::{Path, PathBuf}, io::Cursor};
-use reqwest::blocking::Client;
+use reqwest::Client;
 use sha1_smol::Sha1;
 use tauri::{AppHandle, Manager, api::path::data_dir};
 use authentication::{auth, auth_structs};
@@ -97,23 +97,23 @@ pub fn notify(app_handle: &AppHandle, name: &str, text: &str, status: Notificati
 }
 
 /// Checks if the checksum of the file at `path` matches `checksum` and downloads it from `url` if not.
-pub fn download_file_checked(client: &Client, checksum: &String, path: &PathBuf, url: &String) {
+pub async fn download_file_checked(client: &Client, checksum: &String, path: &PathBuf, url: &String) {
     println!("Checking file at: {}", path.to_string_lossy());
     if !path.is_file() || {
         let contents_checksum = Sha1::from(fs::read(&path).unwrap()).digest().to_string();
         println!("{} vs {}", contents_checksum, checksum);
         &contents_checksum != checksum
     } {
-        download_file(client, path, url)
+        download_file(client, path, url).await
     }
 }
 
-fn download_file(client: &Client, path: &PathBuf, url: &String) {
+async fn download_file(client: &Client, path: &PathBuf, url: &String) {
     println!("Downloading file: {}", url);
-    let response = client.get(url).send().unwrap();
+    let response = client.get(url).send().await.unwrap();
     create_dir_all(path.parent().unwrap()).unwrap();
     let mut file = std::fs::File::create(path).unwrap();
-    let mut content = Cursor::new(response.bytes().unwrap());
+    let mut content = Cursor::new(response.bytes().await.unwrap());
     std::io::copy(&mut content, &mut file).unwrap();
 }
 

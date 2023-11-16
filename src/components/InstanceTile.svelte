@@ -23,7 +23,7 @@
     let errorCount = 0
 
     const launch = () => {
-        launchInstance(path, name, version)
+        launchInstance(path, name, version, id)
     }
 
     
@@ -52,7 +52,7 @@
         <img on:error={onError} src={icon} alt="Instance Icon" class="w-full rounded-t-lg bg-[#1d1e21] border-4 border-[var(--bg-secondary)]"/>
     </div>
     <div class="p-1 text-gray-300 whitespace-nowrap overflow-hidden">
-        <p class="text-xl font-semibold w-full overflow-ellipsis overflow-auto"> { name } </p>
+        <p class="text-xl font-semibold w-full overflow-ellipsis overflow-hidden"> { name } </p>
         <div class="flex text-sm w-full">
             <p> { version } </p>
             <p class="pr-1">,</p>
