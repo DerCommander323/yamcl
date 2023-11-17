@@ -28,7 +28,7 @@ jobs:
         uses: pnpm/action-setup@v2
         with:
           version: 'latest'
-      - name: Install dependencies (Ubuntu only)
+      - name: Install Ubuntu package dependencies
         if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt update
@@ -37,7 +37,10 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
-      - name: Build YAMCL
+      - name: Install Tauri-CLI
+        run: cargo install tauri-cli 
+        
+      - name: Build the app
         run: cargo tauri build -d
     
       - name: Upload build artifacts
