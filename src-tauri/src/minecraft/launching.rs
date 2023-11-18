@@ -91,9 +91,9 @@ async fn parse_arguments(args_struct: Args, account: MCAccount, version: MCExten
         ("${user_properties}", "something".to_string()),
 
         ("${classpath}", version.get_classpath(client).await),
+        ("${assets_root}", version.get_client_assets(client).await),
         ("${version_name}", version.id.replace(' ', "_").replace(':', "_")),
         ("${assets_index_name}", version.asset_index.id),
-        ("${assets_root}", "/home/der/.local/share/PrismLauncher/assets".to_string()),
         ("${version_type}", version.typ),
 
         ("${natives_directory}", format!("{minecraft_path}/natives")),

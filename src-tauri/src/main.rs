@@ -120,4 +120,5 @@ async fn download_file(client: &Client, path: &PathBuf, url: &String) {
 pub fn get_data_dir() -> PathBuf { data_dir().unwrap().join("yamcl") }
 pub fn get_client_jar_dir() -> PathBuf { get_data_dir().join("client_jars") }
 pub fn get_library_dir() -> PathBuf { get_data_dir().join("libraries") }
+pub fn get_assets_dir() -> PathBuf { get_data_dir().join("assets") }
 pub fn get_log4j_dir() -> PathBuf { get_data_dir().join("log4j_configs") }

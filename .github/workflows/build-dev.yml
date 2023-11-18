@@ -37,6 +37,11 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
+      - name: Setup rust build cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
       - name: Install Tauri-CLI
         run: cargo install tauri-cli 
         

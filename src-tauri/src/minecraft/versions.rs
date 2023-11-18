@@ -1,9 +1,9 @@
-use std::{iter, path::PathBuf};
+use std::{iter, path::PathBuf, collections::HashMap, fs};
 
 use reqwest::Client;
 use serde::{Serialize, Deserialize};
 
-use crate::{get_client_jar_dir, download_file_checked, get_log4j_dir};
+use crate::{get_client_jar_dir, download_file_checked, get_log4j_dir, get_assets_dir};
 
 use super::libraries::{MCLibrary, MCRule};
 
@@ -154,6 +154,31 @@ impl MCExtendedVersion {
             Some((logging.client.argument.to_string(), path))
         } else { None }
     }
+
+    pub async fn get_client_assets(&self, client: &Client) -> String {
+        let assets_dir = get_assets_dir();
+        let index_path = &assets_dir.join("indexes").join(format!("{}.json", &self.asset_index.id));
+        download_file_checked(
+            client, 
+            &self.asset_index.sha1, 
+            index_path,
+            &self.asset_index.url
+        ).await;
+
+        let file = fs::read_to_string(index_path).unwrap();
+        let index: AssetIndexFile = serde_json::from_str(&file).unwrap();
+
+        for asset in index.objects {
+            let url = format!("https://resources.download.minecraft.net/{}/{}", &asset.1.hash[..2], asset.1.hash);
+            download_file_checked(
+                client, 
+                &asset.1.hash, 
+                &assets_dir.join("objects").join(&asset.1.hash[..2]).join(&asset.1.hash), 
+                &url
+            ).await;
+        }
+        assets_dir.to_string_lossy().to_string()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -293,4 +318,15 @@ pub struct MCLoggingClientFile {
     size: u64,
     url: String,
     sha1: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AssetIndexFile {
+    objects: HashMap<String, MCAsset>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MCAsset {
+    hash: String,
+    size: u32
 }
