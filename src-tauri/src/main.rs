@@ -111,13 +111,14 @@ pub fn notify(app_handle: &AppHandle, name: &str, text: &str, status: Notificati
 }
 
 /// Checks if the checksum of the file at `path` matches `checksum` and downloads it from `url` if not.
-pub async fn download_file_checked(client: &Client, checksum: &String, path: &PathBuf, url: &String) {
-    if !path.is_file() || {
+pub async fn download_file_checked(client: &Client, checksum: Option<&String>, path: &PathBuf, url: &String) {
+    if !path.is_file() || if let Some(csum) = checksum {
         if let Ok(contents) = fs::read(&path) {
             let contents_checksum = Sha1::from(contents).digest().to_string();
-            &contents_checksum != checksum
+            &contents_checksum != csum
         } else { true }
-    } {
+    } else { false }
+    {
         download_file(client, path, url).await
     } else {
         debug!("Skipped downloading {}", path.to_string_lossy())
@@ -128,7 +129,9 @@ async fn download_file(client: &Client, path: &PathBuf, url: &String) {
     debug!("Downloading to {} from {url}", path.to_string_lossy());
     let response = client.get(url).send().await.unwrap();
     if let Some(parent_path) = path.parent() {
-        create_dir_all(parent_path).expect(&format!("Failed to create directories: {}", parent_path.to_string_lossy()));
+        if !parent_path.exists() {
+            create_dir_all(parent_path).expect(&format!("Failed to create directories: {}", parent_path.to_string_lossy()));
+        }
     }
     let mut file = std::fs::File::create(path).expect(&format!("Failed create file: {}", path.to_string_lossy()));
     let mut content = Cursor::new(response.bytes().await.unwrap());

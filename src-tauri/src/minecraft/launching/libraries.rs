@@ -28,7 +28,7 @@ impl MCLibrary {
         if let Some(artifact) = &self.downloads.artifact {
             download_file_checked(
                 &client,
-                &artifact.sha1,
+                artifact.sha1.as_ref(),
                 &self.get_path(),
                 &artifact.url
             ).await

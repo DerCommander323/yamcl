@@ -2,34 +2,27 @@ use log::{info, error};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::minecraft::launching::mc_structs::{MCArguments, MCAssetIndex, MCDownloads, MCJavaVersion, MCLogging};
+use crate::minecraft::launching::mc_structs::MCArguments;
 
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FabricVersionManifest {
     pub arguments: MCArguments,
-    pub minecraft_arguments: Option<String>,
-    pub asset_index: MCAssetIndex,
-    pub assets: String,
-    pub compliance_level: u16,
-    pub downloads: MCDownloads,
     pub id: String,
-    pub java_version: MCJavaVersion,
     pub libraries: Vec<FabricLibrary>,
     pub main_class: String,
-    pub minimum_launcher_version: u16,
+    pub inherits_from: String,
     pub release_time: String,
     pub time: String,
-    pub logging: Option<MCLogging>,
     #[serde(rename = "type")]
     pub typ: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FabricLibrary {
-    name: String,
-    url: String
+    pub name: String,
+    pub url: String
 }
 
 impl FabricVersionManifest {

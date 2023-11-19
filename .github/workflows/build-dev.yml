@@ -42,6 +42,9 @@ jobs:
         with:
           workspaces: src-tauri
 
+      - name: Setup mold as the linker
+        uses: rui314/setup-mold@main
+
       - name: Install Tauri-CLI
         run: cargo install tauri-cli 
         

@@ -2,6 +2,13 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
+use super::fabric::FabricVersionManifest;
+
+
+pub enum LoaderManifests {
+    Fabric(FabricVersionManifest)
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum ModLoaders {
     Vanilla,

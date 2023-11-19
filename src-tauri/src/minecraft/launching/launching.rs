@@ -4,7 +4,7 @@ use log::{info, debug, warn};
 use reqwest::Client;
 use tauri::AppHandle;
 
-use crate::{auth::get_active_account, minecraft::{launching::mc_structs::MCVersionManifest, modloaders::modloaders::ModLoaders}, authentication::auth_structs::MCAccount, notify, NotificationState};
+use crate::{auth::get_active_account, minecraft::{launching::mc_structs::MCVersionManifest, modloaders::{modloaders::{ModLoaders, LoaderManifests}, fabric::FabricVersionManifest}}, authentication::auth_structs::MCAccount, notify, NotificationState};
 
 use super::mc_structs::MCVersionDetails;
 
@@ -28,7 +28,7 @@ pub async fn launch_instance(
 ) -> Result<(), String> {
     info!("Launching: {minecraft_path}, Version: {version_id}, id: {instance_id}");
 
-    let args = get_arguments(version_id, minecraft_path.clone()).await?;
+    let args = get_arguments(version_id, loader, loader_version, minecraft_path.clone()).await?;
 
     debug!("Args: {:#?}\nCustom Args: {}", args, additional_args);
     info!("Launching NOW!");
@@ -42,38 +42,46 @@ pub async fn launch_instance(
     .spawn()
     .or_else(|err| Err(format!("Failed to run Minecraft command: {}", err.to_string())))?;
 
-    notify(&app_handle, &format!("notification_{}_status", instance_id), "Instance launched successfully!", NotificationState::Success);
+    notify(&app_handle, &format!("{}_status", instance_id), "Instance launched successfully!", NotificationState::Success);
 
     let exit_status = process.wait().expect("Failed to wait on Java process! How did this happen?");
     info!("Exited with status: {}", exit_status);
 
     if exit_status.success() {
         info!("{minecraft_path} exited successfully.");
-        notify(&app_handle, &format!("notification_{}_status", instance_id), "Instance exited successfully.", NotificationState::Success);
+        notify(&app_handle, &format!("{}_status", instance_id), "Instance exited successfully.", NotificationState::Success);
     } else {
         warn!("{minecraft_path} exited (crashed) with status {}", exit_status);
-        notify(&app_handle, &format!("notification_{}_status", instance_id), &format!("Instance crashed with code {}", exit_status.code().unwrap_or(323)), NotificationState::Error);
+        notify(&app_handle, &format!("{}_status", instance_id), &format!("Instance crashed with code {}", exit_status.code().unwrap_or(323)), NotificationState::Error);
     }
 
     Ok(())
 }
 
-async fn get_arguments(version_id: String, minecraft_path: String) -> Result<Args, String> {
+async fn get_arguments(version_id: String, loader: ModLoaders, loader_version: String, minecraft_path: String) -> Result<Args, String> {
     let client = Client::new();
     let account = get_active_account()
         .or(Err("Could not get the selected account!".to_string()))?;
 
     info!("Getting compact version info for {version_id}");
-    let compact_version = MCVersionDetails::from_id(version_id, &client)
+    let compact_version = MCVersionDetails::from_id(version_id.clone(), &client)
         .await
         .ok_or("Could not get compact Minecraft version details!".to_string())?;
 
     debug!("Got compact version info: {:?}", compact_version);
     info!("Getting extended version info from {}", compact_version.url);
 
-    let version = compact_version.get_manifest(&client)
+    let mut version = compact_version.get_manifest(&client)
         .await
         .ok_or("Could not get extended Minecraft version details!".to_string())?;
+
+    match loader {
+        ModLoaders::Forge => todo!(),
+        ModLoaders::Fabric => if let Some(mf) = FabricVersionManifest::get(version_id, loader_version, &client).await {
+            version.merge_with(LoaderManifests::Fabric(mf))
+        },
+        _ => {},
+    }
 
     debug!("Got extended version info. (not listed due to length)");
 

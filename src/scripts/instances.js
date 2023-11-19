@@ -106,7 +106,7 @@ export async function launchInstance(mcPath, instanceName, mcVer, instanceId, lo
         console.log(`Using java path: ${java.path}, with args ${java.args}`)
         const unlisten = await listen(`notification_${instanceId}_status`, event => {
             console.warn(event)
-            finishNotification(`notification_${instanceId}_status`, event.payload.text, event.payload.status)
+            finishNotification(`instance_launch_${instanceId}`, event.payload.text, event.payload.status)
         })
         await invoke('launch_instance', {
             minecraftPath: mcPath, versionId: mcVer, javaPath: java.path, additionalArgs: java.args, instanceId, loaderVersion, loader

@@ -3,8 +3,6 @@ use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 
-use crate::minecraft::modloaders::fabric::FabricVersionManifest;
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MCVersionList {
@@ -29,11 +27,6 @@ pub struct MCVersionDetails {
 pub struct MCLatest {
     pub release: String,
     pub snapshot: String
-}
-
-pub enum VersionManifests {
-    Vanilla(MCVersionManifest),
-    Fabric(FabricVersionManifest)
 }
 
 
@@ -180,7 +173,7 @@ pub struct MCLibraryDownloadsArtifacts {
     pub path: String,
     pub url: String,
     pub size: u32,
-    pub sha1: String
+    pub sha1: Option<String>
 }
 
 #[derive(Debug, Serialize, Deserialize)]

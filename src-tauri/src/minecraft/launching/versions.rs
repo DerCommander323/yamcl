@@ -1,11 +1,11 @@
 use std::{iter, path::PathBuf, fs};
 
-use log::error;
+use log::{error, warn};
 use reqwest::Client;
 
-use crate::{get_client_jar_dir, download_file_checked, get_log4j_dir, get_assets_dir, minecraft::modloaders::modloaders::ModLoaders};
+use crate::{get_client_jar_dir, download_file_checked, get_log4j_dir, get_assets_dir, minecraft::modloaders::modloaders::LoaderManifests};
 
-use super::mc_structs::{MCLibrary, MCRule, MCVersionList, MCVersionDetails, MCVersionManifest, MCJvmArg, MCValue, MCGameArg, AssetIndexFile, VersionManifests};
+use super::mc_structs::{MCLibrary, MCRule, MCVersionList, MCVersionDetails, MCVersionManifest, MCJvmArg, MCValue, MCGameArg, AssetIndexFile, MCLibraryDownloads, MCLibraryDownloadsArtifacts};
 
 const VERSION_URL: &str = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 
@@ -135,7 +135,7 @@ impl MCVersionManifest {
         let path = get_client_jar_dir().join(format!("{}.jar", self.id));
         download_file_checked(
             client,
-            &self.downloads.client.sha1,
+            Some(&self.downloads.client.sha1),
             &path,
             &self.downloads.client.url
         ).await;
@@ -147,7 +147,7 @@ impl MCVersionManifest {
             let path = get_log4j_dir().join(&logging.client.file.id);
             download_file_checked(
                 client,
-                &logging.client.file.sha1,
+                Some(&logging.client.file.sha1),
                 &path,
                 &logging.client.file.url
             ).await;
@@ -162,7 +162,7 @@ impl MCVersionManifest {
         if !index_path.exists() {
             download_file_checked(
                 client, 
-                &self.asset_index.sha1, 
+                Some(&self.asset_index.sha1), 
                 index_path,
                 &self.asset_index.url
             ).await;
@@ -174,7 +174,7 @@ impl MCVersionManifest {
                 let url = format!("https://resources.download.minecraft.net/{}/{}", &asset.1.hash[..2], asset.1.hash);
                 download_file_checked(
                     client, 
-                    &asset.1.hash, 
+                    Some(&asset.1.hash), 
                     &assets_dir.join("objects").join(&asset.1.hash[..2]).join(&asset.1.hash), 
                     &url
                 ).await;
@@ -184,18 +184,39 @@ impl MCVersionManifest {
         assets_dir.to_string_lossy().to_string()
     }
 
-    pub fn merge_with(&mut self, other: VersionManifests) {
+    pub fn merge_with(&mut self, other: LoaderManifests) {
         match other {
-            VersionManifests::Vanilla(_) => todo!(), // should never happen
-            VersionManifests::Fabric(mut fabric) => {
+            LoaderManifests::Fabric(mut fabric) => {
                 self.id = fabric.id;
                 self.main_class = fabric.main_class;
-
 
                 if let Some(args) = &mut self.arguments {
                     args.game.append(&mut fabric.arguments.game);
                     args.jvm.append(&mut fabric.arguments.jvm);
                 }
+
+                self.libraries.append(
+                    &mut fabric.libraries.iter().map(|lib| {
+                        let (raw_path, raw_name) = lib.name.split_once(":").expect("Fabric Library should contain a : seperator!");
+                        let path = format!("{}/{}/{}.jar", raw_path.replace(".", "/"), raw_name.replace(":", "/"), raw_name.replace(":", "-"));
+                        
+                        warn!("path: {path}");
+                        MCLibrary {
+                            downloads: MCLibraryDownloads {
+                                artifact: Some(MCLibraryDownloadsArtifacts {
+                                    path: path.to_string(),
+                                    url: format!("{}/{}", lib.url, path),
+                                    size: 0,
+                                    sha1: None,
+                                }),
+                                classifiers: None
+                            },
+                            name: lib.name.to_string(),
+                            rules: None,
+                            natives: None,
+                        }
+                    }).collect()
+                )
             },
         }
     }
