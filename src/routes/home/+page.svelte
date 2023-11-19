@@ -14,7 +14,7 @@
                 path={instance.path}
                 icon={instance.icon}
                 id={instance.id}
-                modloader={instance.modloader.name}
+                modloader={instance.modloader}
                 version={instance.mc_version}
             />
         {/each}

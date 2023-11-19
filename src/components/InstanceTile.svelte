@@ -11,7 +11,10 @@
      * @type {string}
      */
     export let path
-    export let modloader = "Unknown"
+    /**
+   * @type {{ name: string; version: string; typ: string }}
+   */
+     export let modloader
     /**
      * @type {string}
      */
@@ -23,7 +26,7 @@
     let errorCount = 0
 
     const launch = () => {
-        launchInstance(path, name, version, id)
+        launchInstance(path, name, version, id, modloader.version, modloader.typ)
     }
 
     
@@ -56,7 +59,7 @@
         <div class="flex text-sm w-full">
             <p> { version } </p>
             <p class="pr-1">,</p>
-            <p> { modloader } </p>
+            <p> { modloader.name } </p>
         </div>
     </div>
     

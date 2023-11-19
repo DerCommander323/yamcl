@@ -1,21 +1,22 @@
 use std::fs::{DirEntry, read_to_string, write};
 
 use configparser::ini::Ini;
+use log::debug;
 use serde_json::Value;
 use tauri::{Manager, AppHandle};
 
-use super::modloaders::{self, ModLoaders};
+use super::modloaders::modloaders::{self, ModLoaders};
 
 #[derive(Clone, serde::Serialize)]
 struct SimpleInstance {
-  name: String,
-  icon: String,
-  path: String,
-  id: u32,
-  mc_version: String,
-  modloader: ModLoader,
-  last_played: LastPlayed,
-  instance_type: InstanceType
+    name: String,
+    icon: String,
+    path: String,
+    id: u32,
+    mc_version: String,
+    modloader: ModLoader,
+    last_played: LastPlayed,
+    instance_type: InstanceType
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -24,7 +25,7 @@ enum LastPlayed {
     Epoch(u64),
     Never
 }
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, Debug, serde::Serialize)]
 struct ModLoader {
     name: String,
     typ: modloaders::ModLoaders,
@@ -159,7 +160,7 @@ fn get_or_create_instance_id(dir: DirEntry) -> u32 {
 
 
 fn emit_instance_create(app_handle: AppHandle, instance: SimpleInstance) {
-    println!("{:?} - {} | Version: {}", &instance.instance_type, &instance.name, &instance.mc_version);
+    debug!("{:?} - {} | Version: {:?}", &instance.instance_type, &instance.name, &instance.modloader);
 
     app_handle.emit_all("instance_create", instance).unwrap()
 }

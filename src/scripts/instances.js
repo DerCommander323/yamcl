@@ -8,11 +8,11 @@ import { createNotification, finishNotification } from "./notificationSystem"
 import { getJavaForVersion } from "./javas"
 
 /**
- * @type {import("svelte/store").Writable<{name: string, icon: string, path: string, id: number, last_played: Date, modloader: {name: string, version: string}, mc_version: string}[]>}
+ * @type {import("svelte/store").Writable<{name: string, icon: string, path: string, id: number, last_played: Date, modloader: {name: string, version: string, typ: string}, mc_version: string}[]>}
  */
 export const instanceStore = writable([])
 /**
- * @type {{name: string, icon: string, path: string, id: number, last_played: Date, modloader: {name: string, version: string}, mc_version: string}[]}
+ * @type {{name: string, icon: string, path: string, id: number, last_played: Date, modloader: {name: string, version: string, typ: string}, mc_version: string}[]}
  */
 let instanceList = []
 export let instancesFinished = false
@@ -95,9 +95,11 @@ listen('instance_finish', async (event) => {
  * @param {String} mcPath
  * @param {String} instanceName
  * @param {String} mcVer
+ * @param {String} loaderVersion
+ * @param {String} loader
  * @param {Number} instanceId
  */
-export async function launchInstance(mcPath, instanceName, mcVer, instanceId) {
+export async function launchInstance(mcPath, instanceName, mcVer, instanceId, loaderVersion, loader) {
     console.log(`Launching instance: ${instanceName}...`)
     createNotification(`instance_launch_${instanceId}`, `Launching '${instanceName}'...`)
     getJavaForVersion(mcVer).then(async java => {
@@ -106,8 +108,9 @@ export async function launchInstance(mcPath, instanceName, mcVer, instanceId) {
             console.warn(event)
             finishNotification(`notification_${instanceId}_status`, event.payload.text, event.payload.status)
         })
-        await invoke('launch_instance', { minecraftPath: mcPath, versionId: mcVer, javaPath: java.path, additionalArgs: java.args, instanceId })
-        console.warn("i tihnk it done")
+        await invoke('launch_instance', {
+            minecraftPath: mcPath, versionId: mcVer, javaPath: java.path, additionalArgs: java.args, instanceId, loaderVersion, loader
+        })
     }).catch(e => {
         finishNotification(`instance_launch_${instanceId}`, `Failed to get Java version for Minecraft version ${mcVer}!`, 'error')
         console.error(e)

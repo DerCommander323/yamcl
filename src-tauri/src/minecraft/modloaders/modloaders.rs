@@ -1,6 +1,8 @@
 use std::fmt;
 
-#[derive(Debug, Clone, Copy, serde::Serialize)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum ModLoaders {
     Vanilla,
     Forge,
@@ -9,6 +11,7 @@ pub enum ModLoaders {
     Quilt,
     LiteLoader // not that important for now
 }
+
 impl fmt::Display for ModLoaders {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self)

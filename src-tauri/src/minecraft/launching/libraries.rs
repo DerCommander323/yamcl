@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::{download_file_checked, get_library_dir};
+
+use super::mc_structs::{Action, MCRule, MCLibrary};
 
 impl MCLibrary {
     pub fn get_path(&self) -> PathBuf {
@@ -64,67 +64,3 @@ impl MCRule {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCLibrary {
-    pub downloads: MCLibraryDownloads,
-    pub name: String,
-    pub rules: Option<Vec<MCRule>>,
-    pub natives: Option<Value>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCLibraryDownloads {
-    artifact: Option<MCLibraryDownloadsArtifacts>,
-    classifiers: Option<MCLibraryDownloadsClassifiers>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCLibraryDownloadsArtifacts {
-    path: String,
-    url: String,
-    size: u32,
-    sha1: String
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct MCLibraryDownloadsClassifiers {
-    natives_linux: Option<MCLibraryDownloadsArtifacts>,
-    natives_osx: Option<MCLibraryDownloadsArtifacts>,
-    natives_windows: Option<MCLibraryDownloadsArtifacts>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCRule {
-    action: Action,
-    os: Option<OSRule>,
-    features: Option<FeatureFlags>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum Action {
-    Allow,
-    Disallow
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct FeatureFlags {
-    is_demo_user: Option<bool>,
-    has_custom_resolution: Option<bool>,
-    has_quick_plays_support: Option<bool>,
-    is_quick_play_singleplayer: Option<bool>,
-    is_quick_play_multiplayer: Option<bool>,
-    is_quick_play_realms: Option<bool>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct OSRule {
-    name: Option<String>,
-    arch: Option<String>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct FeatureRule {
-    name: String
-}

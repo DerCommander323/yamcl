@@ -1,11 +1,11 @@
-use std::{iter, path::PathBuf, collections::HashMap, fs};
+use std::{iter, path::PathBuf, fs};
 
+use log::error;
 use reqwest::Client;
-use serde::{Serialize, Deserialize};
 
-use crate::{get_client_jar_dir, download_file_checked, get_log4j_dir, get_assets_dir};
+use crate::{get_client_jar_dir, download_file_checked, get_log4j_dir, get_assets_dir, minecraft::modloaders::modloaders::ModLoaders};
 
-use super::libraries::{MCLibrary, MCRule};
+use super::mc_structs::{MCLibrary, MCRule, MCVersionList, MCVersionDetails, MCVersionManifest, MCJvmArg, MCValue, MCGameArg, AssetIndexFile, VersionManifests};
 
 const VERSION_URL: &str = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 
@@ -16,34 +16,34 @@ impl MCVersionList {
         match version_list {
             Ok(list) => Some(list),
             Err(e) => {
-                println!("Failed to get Minecraft version list: {e}");
+                error!("Failed to get Minecraft version list: {e}");
                 None
             }
         }
     }
 }
 
-impl MCCompactVersion {
+impl MCVersionDetails {
     pub async fn from_id(version_id: String, client: &Client) -> Option<Self> {
         let version_list = MCVersionList::get(client).await?;
         version_list.versions.into_iter().find(|ver| {
             ver.id == version_id
         })
     }
-}
 
-impl MCExtendedVersion {
-    pub async fn from_compact(compact_version: MCCompactVersion, client: &Client) -> Option<Self> {
-        let extended_version: Result<MCExtendedVersion, reqwest::Error> = client.get(compact_version.url).send().await.unwrap().json().await;
+    pub async fn get_manifest(&self, client: &Client) -> Option<MCVersionManifest> {
+        let extended_version: Result<MCVersionManifest, reqwest::Error> = client.get(&self.url).send().await.unwrap().json().await;
         match extended_version {
             Ok(ver) => Some(ver),
             Err(e) => {
-                println!("Failed to get extended Minecraft version info: {e}");
+                error!("Failed to get extended Minecraft version info: {e}");
                 None
             }
         }
     }
+}
 
+impl MCVersionManifest {
     pub async fn get_jvm_args(&self, client: &Client) -> Vec<String> {
         let mut final_args: Vec<String> = Vec::new();
 
@@ -158,175 +158,45 @@ impl MCExtendedVersion {
     pub async fn get_client_assets(&self, client: &Client) -> String {
         let assets_dir = get_assets_dir();
         let index_path = &assets_dir.join("indexes").join(format!("{}.json", &self.asset_index.id));
-        download_file_checked(
-            client, 
-            &self.asset_index.sha1, 
-            index_path,
-            &self.asset_index.url
-        ).await;
 
-        let file = fs::read_to_string(index_path).unwrap();
-        let index: AssetIndexFile = serde_json::from_str(&file).unwrap();
-
-        for asset in index.objects {
-            let url = format!("https://resources.download.minecraft.net/{}/{}", &asset.1.hash[..2], asset.1.hash);
+        if !index_path.exists() {
             download_file_checked(
                 client, 
-                &asset.1.hash, 
-                &assets_dir.join("objects").join(&asset.1.hash[..2]).join(&asset.1.hash), 
-                &url
+                &self.asset_index.sha1, 
+                index_path,
+                &self.asset_index.url
             ).await;
+    
+            let file = fs::read_to_string(index_path).unwrap();
+            let index: AssetIndexFile = serde_json::from_str(&file).unwrap();
+    
+            for asset in index.objects {
+                let url = format!("https://resources.download.minecraft.net/{}/{}", &asset.1.hash[..2], asset.1.hash);
+                download_file_checked(
+                    client, 
+                    &asset.1.hash, 
+                    &assets_dir.join("objects").join(&asset.1.hash[..2]).join(&asset.1.hash), 
+                    &url
+                ).await;
+            }
         }
+
         assets_dir.to_string_lossy().to_string()
     }
-}
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCVersionList {
-    latest: MCLatest,
-    versions: Vec<MCCompactVersion>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MCCompactVersion {
-    pub id: String,
-    #[serde(rename = "type")]
-    pub typ: String,
-    pub url: String,
-    pub time: String,
-    pub release_time: String,
-    pub sha1: String,
-    pub compliance_level: u32
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCLatest {
-    release: String,
-    snapshot: String
-}
+    pub fn merge_with(&mut self, other: VersionManifests) {
+        match other {
+            VersionManifests::Vanilla(_) => todo!(), // should never happen
+            VersionManifests::Fabric(mut fabric) => {
+                self.id = fabric.id;
+                self.main_class = fabric.main_class;
 
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MCExtendedVersion {
-    pub arguments: Option<MCArguments>,
-    pub minecraft_arguments: Option<String>,
-    pub asset_index: MCAssetIndex,
-    pub assets: String,
-    pub compliance_level: u16,
-    pub downloads: MCDownloads,
-    pub id: String,
-    pub java_version: MCJavaVersion,
-    pub libraries: Vec<MCLibrary>,
-    pub main_class: String,
-    pub minimum_launcher_version: u16,
-    pub release_time: String,
-    pub time: String,
-    pub logging: Option<MCLogging>,
-    #[serde(rename = "type")]
-    pub typ: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCArguments {
-    pub game: Vec<MCGameArg>,
-    pub jvm: Vec<MCJvmArg>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum MCGameArg {
-    GameArg(String),
-    GameRule(MCGameRule)
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum MCJvmArg {
-    JvmArg(String),
-    JvmRule(MCJvmRule)
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCGameRule {
-    rules: Vec<MCRule>,
-    value: MCValue
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCJvmRule {
-    rules: Vec<MCRule>,
-    value: MCValue
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum MCValue {
-    String(String),
-    StringList(Vec<String>)
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MCAssetIndex {
-    pub id: String,
-    url: String,
-    size: u64,
-    total_size: u64,
-    sha1: String
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCDownloads {
-    client: MCDownload,
-    client_mappings: Option<MCDownload>,
-    server: MCDownload,
-    server_mappings: Option<MCDownload>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCDownload {
-    url: String,
-    size: u64,
-    sha1: String
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MCJavaVersion {
-    component: String,
-    major_version: u16
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCLogging {
-    client: MCLoggingClient
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCLoggingClient {
-    argument: String,
-    file: MCLoggingClientFile,
-    #[serde(rename = "type")]
-    typ: String
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCLoggingClientFile {
-    id: String,
-    size: u64,
-    url: String,
-    sha1: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AssetIndexFile {
-    objects: HashMap<String, MCAsset>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MCAsset {
-    hash: String,
-    size: u32
+                if let Some(args) = &mut self.arguments {
+                    args.game.append(&mut fabric.arguments.game);
+                    args.jvm.append(&mut fabric.arguments.jvm);
+                }
+            },
+        }
+    }
 }
