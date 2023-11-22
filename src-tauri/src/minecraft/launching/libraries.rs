@@ -4,13 +4,15 @@ use reqwest::Client;
 
 use crate::{download_file_checked, get_library_dir};
 
-use super::mc_structs::{Action, MCRule, MCLibrary};
+use super::mc_structs::{Action, MCRule, MCLibrary, MCLibraryDownloadsArtifacts};
 
 impl MCLibrary {
-    pub fn get_path(&self) -> PathBuf {
+    pub fn get_downloads(&self) -> Vec<&MCLibraryDownloadsArtifacts> {
+        let mut paths = Vec::new();
         if let Some(artifact) = &self.downloads.artifact {
-            get_library_dir().join(&artifact.path)
-        } else if let Some(classifiers) = &self.downloads.classifiers {
+            paths.push(artifact);
+        }
+        if let Some(classifiers) = &self.downloads.classifiers {
             let natives = if cfg!(windows) {
                 &classifiers.natives_windows
             } else if cfg!(macos) {
@@ -18,19 +20,28 @@ impl MCLibrary {
             } else {
                 &classifiers.natives_linux // in the hopes of these natives working on platforms like OpenBSD too (probably not)
             };
-            get_library_dir().join(&natives.as_ref().unwrap().path)
-        } else {
-            PathBuf::new()
+            if let Some(n) = natives.as_ref() {
+                paths.push(&n);
+            }
         }
+        paths
+    }
+    
+    pub fn get_paths(&self) -> Vec<PathBuf> {
+        let lib_dir = get_library_dir();
+        self.get_downloads().iter().map(|&download| {
+            lib_dir.join(&download.path)
+        }).collect()
     }
 
     pub async fn download_checked(&self, client: &Client) {
-        if let Some(artifact) = &self.downloads.artifact {
+        let lib_dir = get_library_dir();
+        for download in self.get_downloads() {
             download_file_checked(
                 &client,
-                artifact.sha1.as_ref(),
-                &self.get_path(),
-                &artifact.url
+                download.sha1.as_ref(),
+                &lib_dir.join(&download.path),
+                &download.url
             ).await
         }
     }

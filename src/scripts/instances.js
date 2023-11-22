@@ -62,6 +62,7 @@ export async function gatherInstances() {
                 })
             } catch (e) {
                 console.error(`Failed to make icon request: ${e}`)
+                event.payload.icon = default_icon
             }
         } else {
             event.payload.icon = iconPath ? convertFileSrc(await join(iconPath, ic)) : default_icon

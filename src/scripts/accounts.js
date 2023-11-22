@@ -57,10 +57,15 @@ export function loadAccounts() {
     console.log('Loading accounts...')
     invoke('get_selected_index')
         .then(i => {
-            selectedIndex.set(i)
-            setPreviewIndex(i)
+            if(i === null) {
+                accountState.set('errored')
+                return
+            } else {
+                selectedIndex.set(i)
+                setPreviewIndex(i)
+            }
         })
-    invoke('load_accounts')
+    invoke('get_accounts')
         .catch(e => {
             console.error('Error occured while loading accounts: ' + e)
             accountState.set('errored')

@@ -117,9 +117,8 @@ impl MCVersionManifest {
         }
 
         libraries.iter()
-            .map(|&lib| {
-                lib.get_path().to_string_lossy().to_string()
-            })
+            .flat_map(|&lib| lib.get_paths() )
+            .map(|path| path.to_string_lossy().to_string() )
             .chain(iter::once(
                 self.get_client_jar(&client).await.to_string_lossy().to_string()
             ))
@@ -209,7 +208,8 @@ impl MCVersionManifest {
                                     size: 0,
                                     sha1: None,
                                 }),
-                                classifiers: None
+                                classifiers: None,
+                                natives: None
                             },
                             name: lib.name.to_string(),
                             rules: None,

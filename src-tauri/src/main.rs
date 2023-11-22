@@ -9,14 +9,14 @@ use log::debug;
 use reqwest::Client;
 use sha1_smol::Sha1;
 use simple_logger::SimpleLogger;
-use tauri::{AppHandle, Manager, api::path::data_dir};
-use authentication::{auth, auth_structs};
+use tauri::{AppHandle, Manager, api::path::{data_dir, config_dir}};
+use authentication::{auth, auth_structs, accounts};
 use minecraft::{launching, java};
 
 mod minecraft {
     pub mod launching {
         pub mod launching;
-        pub mod versions;
+        pub mod manifests;
         pub mod libraries;
         pub mod mc_structs;
     }
@@ -30,6 +30,7 @@ mod minecraft {
 mod authentication { 
     pub mod auth;
     pub mod auth_structs;
+    pub mod accounts;
 }
 
 #[derive(serde::Serialize, Clone)]
@@ -59,10 +60,10 @@ fn main() {
             file_exists,
             launching::launching::launch_instance,
             java::get_java_version,
-            auth::get_selected_index,
-            auth::set_selected_index,
-            auth::remove_account,
-            auth::load_accounts,
+            accounts::get_selected_index,
+            accounts::set_selected_index,
+            accounts::remove_account,
+            accounts::get_accounts,
             auth::add_account
         ])
         .run(tauri::generate_context!())
@@ -138,6 +139,7 @@ async fn download_file(client: &Client, path: &PathBuf, url: &String) {
     std::io::copy(&mut content, &mut file).expect(&format!("Failed to write to {}", path.to_string_lossy()));
 }
 
+pub fn get_config_dir() -> PathBuf { config_dir().unwrap().join("yamcl") }
 pub fn get_data_dir() -> PathBuf { data_dir().unwrap().join("yamcl") }
 pub fn get_client_jar_dir() -> PathBuf { get_data_dir().join("client_jars") }
 pub fn get_library_dir() -> PathBuf { get_data_dir().join("libraries") }

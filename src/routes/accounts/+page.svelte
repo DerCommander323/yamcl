@@ -31,7 +31,12 @@
             <p> Loading accounts failed! </p>
         {:else if $accountState === 'success'}
             {#if $accountStore.length > 0}
-                <AccountDisplay> </AccountDisplay>
+                {#if $selectedIndex >= 0}
+                    <AccountDisplay> </AccountDisplay>
+                {:else}
+                    <p> No account selected! </p>
+                    <p> Use the checkmark button on any account to set it as the selected! </p>
+                {/if}
             {:else}
                 <p> No accounts found! </p>
                 <p> Use the 'Add account' button to add one! </p>

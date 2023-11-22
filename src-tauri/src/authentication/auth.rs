@@ -1,15 +1,11 @@
-use std::{fs, io::Error};
-
 use afire::{Server, Method, Response, Status};
 use reqwest::blocking::Client;
-use serde_json::{json, Value};
-use tauri::{AppHandle, api::path::config_dir};
-use crate::{auth_structs::{MCAccount, MCProfile, Entitlements, MCResponse, XBLResponse, MSAResponse}, notify, NotificationState};
+use serde_json::json;
+use tauri::AppHandle;
+use crate::{auth_structs::{MCAccount, MCProfile, Entitlements, MCResponse, XBLResponse, MSAResponse}, notify, NotificationState, authentication::accounts::save_new_account};
 
 const MS_CLIENT_ID: &str = "5431ff2d-20f8-415b-aa2f-5218eba055ea"; // The Yet Another MC Launcher client_id. If you fork this project, please make sure to use your own!
 const REDIRECT_PORT: u16 = 32301;
-
-const ACCOUNT_FILE_NAME: &str = "accounts.json";
 
 fn get_login_url() -> String {
     String::from_iter([
@@ -233,93 +229,4 @@ fn get_mc_profile(client: &Client, access_token: &str) -> MCProfile {
     .unwrap();
 
     mcprofile_response
-}
-
-fn save_new_account(account: MCAccount) -> Result<(), Error> {
-    let mut accounts = get_accounts()?;
-    accounts.push(account);
-    save_accounts(accounts)?;
-    Ok(())
-}
-
-#[tauri::command]
-pub fn load_accounts() -> Result<Vec<MCProfile>, String> {
-    match get_accounts() {
-        Ok(val) => Ok(val.into_iter().map(|acc| acc.mc_profile).collect()),
-        Err(e) => Err(e.to_string())
-    }
-}
-
-#[tauri::command]
-pub fn get_selected_index() -> i64 {
-    let accounts_json = config_dir().unwrap().join("yamcl").join(ACCOUNT_FILE_NAME);
-    let json: Value = serde_json::from_str(&fs::read_to_string(accounts_json).unwrap()).unwrap();
-
-    if let Some(index) = json["selectedIndex"].as_i64() {
-        index
-    } else {
-        -1
-    }
-}
-
-#[tauri::command]
-pub fn set_selected_index(index: u64) {
-    let accounts_json = config_dir().unwrap().join("yamcl").join(ACCOUNT_FILE_NAME);
-    let mut json: Value = serde_json::from_str(&fs::read_to_string(&accounts_json).unwrap()).unwrap();
-    json["selectedIndex"] = json!(index);
-    fs::write(accounts_json, serde_json::to_string_pretty(&json).unwrap()).unwrap();
-}
-
-#[tauri::command]
-pub fn remove_account(index: usize) {
-    let mut accounts = get_accounts().unwrap();
-
-    accounts.remove(index);
-    save_accounts(accounts).unwrap();
-}
-
-pub fn get_active_account() -> Result<MCAccount, Error> {
-    let accounts = get_accounts()?;
-    let index: usize = get_selected_index().try_into().unwrap_or(0);
-
-    Ok(accounts.into_iter().nth(index).unwrap())
-}
-
-fn get_accounts() -> Result<Vec<MCAccount>, Error> {
-    let accounts_json = config_dir().unwrap().join("yamcl").join(ACCOUNT_FILE_NAME);
-
-    if accounts_json.exists() {
-        let contents = fs::read_to_string(&accounts_json)?;
-
-        let json: Value = serde_json::from_str(&contents).unwrap();
-        if contents.is_empty() || !json.is_object() || !json["accounts"].is_array() {
-            fs::write(accounts_json, serde_json::to_string_pretty(&json!({
-                "accounts": [],
-                "selectedIndex": get_selected_index()
-            }))?)?;
-            Ok(Vec::new())
-        } else {
-            let accounts: Vec<MCAccount> = json["accounts"].as_array().unwrap().iter().map(|val| 
-                serde_json::from_value(val.to_owned()).unwrap()
-            ).collect();
-            Ok(accounts)            
-        }
-
-    } else {
-        fs::write(accounts_json, serde_json::to_string_pretty(&json!({
-            "accounts": []
-        }))?)?;
-        Ok(Vec::new())
-    }
-}
-
-fn save_accounts(accounts: Vec<MCAccount>) -> Result<(), Error> {
-    let accounts_json = config_dir().unwrap().join("yamcl").join(ACCOUNT_FILE_NAME);
-    let json = json!({
-        "accounts": accounts,
-        "selectedIndex": get_selected_index()
-    });
-
-    fs::write(accounts_json, serde_json::to_string_pretty(&json).unwrap())?;
-    Ok(())
 }

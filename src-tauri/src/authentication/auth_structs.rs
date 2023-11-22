@@ -1,5 +1,13 @@
 use serde::{Serialize, Deserialize};
 
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AccountList {
+    pub accounts: Vec<MCAccount>,
+    pub selected_index: Option<u32>
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MCAccount {
     pub xsts_response: XBLResponse,

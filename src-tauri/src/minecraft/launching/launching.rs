@@ -4,7 +4,7 @@ use log::{info, debug, warn};
 use reqwest::Client;
 use tauri::AppHandle;
 
-use crate::{auth::get_active_account, minecraft::{launching::mc_structs::MCVersionManifest, modloaders::{modloaders::{ModLoaders, LoaderManifests}, fabric::FabricVersionManifest}}, authentication::auth_structs::MCAccount, notify, NotificationState};
+use crate::{accounts::get_active_account, minecraft::{launching::mc_structs::MCVersionManifest, modloaders::{modloaders::{ModLoaders, LoaderManifests}, fabric::FabricVersionManifest}}, authentication::auth_structs::MCAccount, notify, NotificationState};
 
 use super::mc_structs::MCVersionDetails;
 
@@ -61,7 +61,7 @@ pub async fn launch_instance(
 async fn get_arguments(version_id: String, loader: ModLoaders, loader_version: String, minecraft_path: String) -> Result<Args, String> {
     let client = Client::new();
     let account = get_active_account()
-        .or(Err("Could not get the selected account!".to_string()))?;
+        .ok_or("Could not get the selected account!".to_string())?;
 
     info!("Getting compact version info for {version_id}");
     let compact_version = MCVersionDetails::from_id(version_id.clone(), &client)

@@ -165,7 +165,8 @@ pub struct MCLibrary {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MCLibraryDownloads {
     pub artifact: Option<MCLibraryDownloadsArtifacts>,
-    pub classifiers: Option<MCLibraryDownloadsClassifiers>
+    pub classifiers: Option<MCLibraryDownloadsClassifiers>,
+    pub natives: Option<HashMap<String, String>>
 }
 
 #[derive(Debug, Serialize, Deserialize)]
