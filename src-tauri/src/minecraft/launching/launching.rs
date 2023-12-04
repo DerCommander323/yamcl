@@ -60,8 +60,10 @@ pub async fn launch_instance(
 
 async fn get_arguments(version_id: String, loader: ModLoaders, loader_version: String, minecraft_path: String) -> Result<Args, String> {
     let client = Client::new();
-    let account = get_active_account()
+    let mut account = get_active_account()
         .ok_or("Could not get the selected account!".to_string())?;
+    
+    account.refresh(&client, false).await;
 
     info!("Getting compact version info for {version_id}");
     let compact_version = MCVersionDetails::from_id(version_id.clone(), &client)

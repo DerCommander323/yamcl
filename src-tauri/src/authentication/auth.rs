@@ -1,8 +1,11 @@
 use afire::{Server, Method, Response, Status};
-use reqwest::blocking::Client;
+use chrono::{Utc, Duration};
+use log::{info, debug, error};
+use reqwest::Client;
 use serde_json::json;
-use tauri::AppHandle;
-use crate::{auth_structs::{MCAccount, MCProfile, Entitlements, MCResponse, XBLResponse, MSAResponse}, notify, NotificationState, authentication::accounts::save_new_account};
+use tauri::{AppHandle, async_runtime::block_on};
+use crate::{auth_structs::*, notify, NotificationState, authentication::accounts::{save_new_account, update_account}};
+
 
 const MS_CLIENT_ID: &str = "5431ff2d-20f8-415b-aa2f-5218eba055ea"; // The Yet Another MC Launcher client_id. If you fork this project, please make sure to use your own!
 const REDIRECT_PORT: u16 = 32301;
@@ -12,7 +15,7 @@ fn get_login_url() -> String {
         "https://login.live.com/oauth20_authorize.srf?client_id=",
         MS_CLIENT_ID,
         "&prompt=select_account",
-        //"&cobrandid=8058f65d-ce06-4c30-9559-473c9275a65d",
+        "&cobrandid=8058f65d-ce06-4c30-9559-473c9275a65d",
         "&response_type=code",
         "&scope=XboxLive.signin%20XboxLive.offline_access",
         "&redirect_uri=http%3A%2F%2F127.0.0.1%3A",
@@ -41,7 +44,7 @@ fn get_mc_profile_url() -> String {
 
 
 #[tauri::command(async)]
-pub fn add_account(app_handle: AppHandle) {
+pub async fn add_account(app_handle: AppHandle) {
     let mut redirect_server = Server::<()>::new("127.0.0.1", REDIRECT_PORT);
 
     let login_window = tauri::WindowBuilder::new(
@@ -69,15 +72,15 @@ pub fn add_account(app_handle: AppHandle) {
         let app_handle_clone = app_handle.clone();
         redirect_server.route(Method::GET, "/", move |req| {
             if let Some(code) = req.query.get("code") {
-                println!("Code obtained!");
+                info!("Code obtained!");
                 notify(&app_handle, "login_status", "Beginning login process...", NotificationState::Running);
                 login_window.close().unwrap();
-                add_account_code(code, &app_handle_clone);
+                block_on(add_account_code(code, &app_handle_clone));
                 Response::new()
                     .text("You may close this window now.")
                     .status(Status::Ok)
             } else {
-                println!("Getting Code failed!");
+                error!("Getting Code failed!");
                 notify(&app_handle_clone, "login_status", "Failed getting code from response!", NotificationState::Error);
                 Response::new()
                     .text("Failed to get the authentication code!")
@@ -85,148 +88,258 @@ pub fn add_account(app_handle: AppHandle) {
             }
         });
 
-        println!("Starting auth redirect HTTP server on port {REDIRECT_PORT}...");
+        info!("Starting auth redirect HTTP server on port {REDIRECT_PORT}...");
         if let Err(e) = redirect_server.start() {
-            println!("Starting redirect server failed: {e}")
+            error!("Starting redirect server failed: {e}")
         };
     });
 }
 
-fn add_account_code(code: &str, app_handle: &AppHandle) {
-    println!("Started adding new Minecraft account!");
-    let client = reqwest::blocking::Client::new();
+async fn add_account_code(code: &str, app_handle: &AppHandle) {
+    info!("Started adding new Minecraft account!");
+    let client = Client::new();
 
-    println!("Getting Microsoft Auth response...");
+    info!("Getting Microsoft Auth response...");
     notify(&app_handle, "login_status", "Getting Microsoft Auth reponse...", NotificationState::Running);
+    let msa_response = MSAResponse2::from_code(code, &client).await;
+    // trace!("{:#?}", msa_response);
 
-    let msa_params = [
-        ("client_id", MS_CLIENT_ID),
-        ("code", code),
-        ("grant_type", "authorization_code"),
-        ("redirect_uri", &String::from_iter(["http://127.0.0.1:", &REDIRECT_PORT.to_string()])),
-        ("scope", "XboxLive.signin XboxLive.offline_access")
-    ];
-    let msa_response: MSAResponse = client.post(get_msa_url())
-        .form(&msa_params)
-        .send()
-        .unwrap()
-        .json()
-        .unwrap();
-
-    // println!("{:#?}", msa_response);
-    println!("Getting Xbox Live Auth response...");
+    info!("Getting Xbox Live Auth response...");
     notify(&app_handle, "login_status", "Getting Xbox Live Auth reponse...", NotificationState::Running);
+    let xbl_response = msa_response.get_xbl_reponse(&client).await;
+    // trace!("{:#?}", xbl_response);
 
-    let xbl_json = json!({
-        "Properties": {
-            "AuthMethod": "RPS",
-            "SiteName": "user.auth.xboxlive.com",
-            "RpsTicket": &String::from_iter(["d=", &msa_response.access_token])
-        },
-        "RelyingParty": "http://auth.xboxlive.com",
-        "TokenType": "JWT"
-    });
-    let xbl_response: XBLResponse = client.post(get_xbl_url())
-        .json(&xbl_json)
-        .send()
-        .unwrap()
-        .json()
-        .unwrap();
-
-    // println!("{:#?}", xbl_response);
-    println!("Getting Xsts Auth response...");
+    info!("Getting Xsts Auth response...");
     notify(&app_handle, "login_status", "Getting Xsts Auth reponse...", NotificationState::Running);
+    let xsts_response = xbl_response.xbl_to_xsts_response(&client).await;
+    // trace!("{:#?}", xsts_response);
 
-    let xsts_json = json!({
-        "Properties": {
-            "SandboxId": "RETAIL",
-            "UserTokens": [
-                xbl_response.token
-            ]
-        },
-        "RelyingParty": "rp://api.minecraftservices.com/",
-        "TokenType": "JWT"
-    });
-    let xsts_response: XBLResponse = client.post(get_xsts_url())
-    .json(&xsts_json)
-    .send()
-    .unwrap()
-    .json()
-    .unwrap();
-
-    // println!("{:#?}", xsts_response);
-    println!("Getting Minecraft Auth response...");
+    info!("Getting Minecraft Auth response...");
     notify(&app_handle, "login_status", "Getting Minecraft Auth reponse...", NotificationState::Running);
+    let mc_response = xsts_response.xsts_to_mc_response(&client).await;
+    // trace!("{:#?}", mc_response);
 
-    let mc_json = json!({
-        "xtoken": String::from_iter(["XBL3.0 x=", &xsts_response.display_claims.xui[0].uhs, ";", &xsts_response.token]),
-        "platform": "PC_LAUNCHER"
-    });
-    let mc_response: MCResponse = client.post(get_mc_url())
-    .json(&mc_json)
-    .send()
-    .unwrap()
-    .json()
-    .unwrap();
-
-    // println!("{:#?}", mc_response);
-    println!("Checking Minecraft ownership...");
+    info!("Checking Minecraft ownership...");
     notify(&app_handle, "login_status", "Checking Minecraft ownership...", NotificationState::Running);
-
-    if !has_mc_ownership(&client, &mc_response.access_token) {
+    if !mc_response.has_mc_ownership(&client).await {
         notify(&app_handle, "login_status", "Account does not own Minecraft!", NotificationState::Error);
         return;
     }
 
-    println!("Getting Minecraft account...");
+    info!("Getting Minecraft account...");
     notify(&app_handle, "login_status", "Getting Minecraft account...", NotificationState::Running);
-    let mc_profile = get_mc_profile(&client, &mc_response.access_token);
+    let mc_profile = mc_response.get_mc_profile(&client).await;
+    // trace!("{:#?}", mc_profile);
 
-    // println!("{:#?}", mc_profile);
     let mc_account = MCAccount {
+        msa_response,
+        xbl_response,
         xsts_response,
         mc_response,
         mc_profile
     };
     let username = mc_account.mc_profile.name.clone();
 
-    //println!("{:#?}", mc_account);
-    println!("Saving new Minecraft account...");
+    // trace!("{:#?}", mc_account);
+    info!("Saving new Minecraft account...");
     notify(&app_handle, "login_status", "Saving new account...", NotificationState::Running);
     if let Err(e) = save_new_account(mc_account) {
-        println!("Error occured while saving new account: {e}")
+        error!("Error occured while saving new account: {e}")
     }
 
     notify(&app_handle, "login_status", &String::from_iter(["Successfully added account \"", &username, "\"!"]), NotificationState::Success);
-    println!("Successfully added new account.");
+    info!("Successfully added new account.");
 }
 
 
-fn has_mc_ownership(client: &Client, access_token: &str) -> bool {
-    let entitlements_response: Entitlements = client.get(
-        String::from_iter([&get_entitlements_url(), "?requestId=", &uuid::Uuid::new_v4().to_string()])
-    )
-    .header("Authorization", String::from_iter(["Bearer ", &access_token]))
-    .header("Content-Type", "application/json")
-    .header("Accept", "application/json")
-    .send()
-    .unwrap()
-    .json()
-    .unwrap();
+
+impl MSAResponse2 {
+    async fn from_code(code: &str, client: &Client) -> Self {
+        let params = [
+            ("client_id", MS_CLIENT_ID),
+            ("code", code),
+            ("grant_type", "authorization_code"),
+            ("redirect_uri", &String::from_iter(["http://127.0.0.1:", &REDIRECT_PORT.to_string()])),
+            ("scope", "XboxLive.signin XboxLive.offline_access")
+        ];
+
+        let msa_response: MSAResponse = client.post(get_msa_url())
+        .form(&params)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+
+        MSAResponse2 {
+            token_type: msa_response.token_type,
+            expires_at: Utc::now() + Duration::seconds(msa_response.expires_in.into()),
+            scope: msa_response.scope,
+            access_token: msa_response.access_token,
+            refresh_token: msa_response.refresh_token,
+            user_id: msa_response.user_id,
+        }
+    }
+
+    async fn refresh(&mut self, client: &Client) {
+        let params = [
+            ("client_id", MS_CLIENT_ID),
+            ("grant_type", "refresh_token"),
+            ("refresh_token", &self.refresh_token),
+            ("scope", &self.scope)
+        ];
+
+        let msa_response: MSAResponse = client.post(get_msa_url())
+        .form(&params)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+
+        debug!("res {:#?}", msa_response);
+
+        *self = MSAResponse2 {
+            token_type: msa_response.token_type,
+            expires_at: Utc::now() + Duration::seconds(msa_response.expires_in.into()),
+            scope: msa_response.scope,
+            access_token: msa_response.access_token,
+            refresh_token: msa_response.refresh_token,
+            user_id: msa_response.user_id,
+        };
+    }
+
+    async fn get_xbl_reponse(&self, client: &Client) -> XBLResponse {
+        let json = json!({
+            "Properties": {
+                "AuthMethod": "RPS",
+                "SiteName": "user.auth.xboxlive.com",
+                "RpsTicket": &String::from_iter(["d=", &self.access_token])
+            },
+            "RelyingParty": "http://auth.xboxlive.com",
+            "TokenType": "JWT"
+        });
+
+        client.post(get_xbl_url())
+        .json(&json)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap()
+    }
+}
+
+impl XBLResponse {
+    async fn xbl_to_xsts_response(&self, client: &Client) -> Self {
+        let json = json!({
+            "Properties": {
+                "SandboxId": "RETAIL",
+                "UserTokens": [
+                    self.token
+                ]
+            },
+            "RelyingParty": "rp://api.minecraftservices.com/",
+            "TokenType": "JWT"
+        });
+
+        client.post(get_xsts_url())
+        .json(&json)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap()
+    }
+
+    async fn xsts_to_mc_response(&self, client: &Client) -> MCResponse2 {
+        let json = json!({
+            "xtoken": String::from_iter(["XBL3.0 x=", &self.display_claims.xui[0].uhs, ";", &self.token]),
+            "platform": "PC_LAUNCHER"
+        });
     
-    // println!("{:#?}", entitlements_response);
-    entitlements_response.items.iter().any(|item| 
-        item.name.eq_ignore_ascii_case("product_minecraft") || item.name.eq_ignore_ascii_case("game_minecraft")
-    )
+        let mc_response: MCResponse = client.post(get_mc_url())
+        .json(&json)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    
+        MCResponse2 {
+            access_token: mc_response.access_token,
+            expires_at: Utc::now() + Duration::seconds(mc_response.expires_in.into()),
+            username: mc_response.username,
+            token_type: mc_response.token_type,
+        }
+    }
 }
 
-fn get_mc_profile(client: &Client, access_token: &str) -> MCProfile {
-    let mcprofile_response: MCProfile = client.get(get_mc_profile_url())
-    .header("Authorization", String::from_iter(["Bearer ", access_token]))
-    .send()
-    .unwrap()
-    .json()
-    .unwrap();
+impl MCResponse2 {
+    async fn get_mc_profile(&self, client: &Client) -> MCProfile {
+        let mcprofile_response: MCProfile = client.get(get_mc_profile_url())
+        .header("Authorization", String::from_iter(["Bearer ", &self.access_token]))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    
+        mcprofile_response
+    }
 
-    mcprofile_response
+    async fn has_mc_ownership(&self, client: &Client) -> bool {
+        let entitlements_response: Entitlements = client.get(
+            String::from_iter([&get_entitlements_url(), "?requestId=", &uuid::Uuid::new_v4().to_string()])
+        )
+        .header("Authorization", String::from_iter(["Bearer ", &self.access_token]))
+        .header("Content-Type", "application/json")
+        .header("Accept", "application/json")
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+        // trace!("{:#?}", entitlements_response);
+
+        entitlements_response.items.iter().any(|item| 
+            item.name.eq_ignore_ascii_case("product_minecraft") || item.name.eq_ignore_ascii_case("game_minecraft")
+        )
+    }
 }
+
+
+impl MCAccount {
+    pub async fn refresh(&mut self, client: &Client, force: bool) {
+        let previous = self.clone();
+        let now = Utc::now();
+
+        if self.mc_response.expires_at < now || force {
+            if self.xsts_response.not_after < now || force {
+                if self.xbl_response.not_after < now || force {
+                    if self.msa_response.expires_at < now || force {
+                        info!("Refreshing Microsoft Token...");
+                        self.msa_response.refresh(&client).await;
+                    }
+                    info!("Refreshing Xbox Live Token...");
+                    self.xbl_response = self.msa_response.get_xbl_reponse(&client).await;
+                }
+                info!("Refreshing Xsts Token...");
+                self.xsts_response = self.xbl_response.xbl_to_xsts_response(&client).await;
+            }
+            info!("Refreshing Minecraft Token...");
+            self.mc_response = self.xsts_response.xsts_to_mc_response(&client).await;
+
+            debug!("Saving updated account details...");
+            update_account(previous, self.clone());
+        }
+    }
+}
+
