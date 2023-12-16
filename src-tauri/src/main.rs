@@ -23,6 +23,8 @@ mod minecraft {
     pub mod modloaders {
         pub mod modloaders;
         pub mod fabric;
+        pub mod forge;
+        pub mod forge_installer;
     }
     pub mod java;
     pub mod instances;
@@ -139,9 +141,32 @@ async fn download_file(client: &Client, path: &PathBuf, url: &String) {
     std::io::copy(&mut content, &mut file).expect(&format!("Failed to write to {}", path.to_string_lossy()));
 }
 
+pub fn maven_identifier_to_path(identifier: &str) -> String {
+    let mut id = identifier.to_string();
+    let extension = if let Some(i) = identifier.find("@") {
+        let ext = &identifier[i..];
+        id = id.replace(ext, "");
+        &ext[1..]
+    } else { "jar" };
+
+    let parts: Vec<&str> = id.splitn(3, ":").collect();
+    let (raw_path, raw_name, raw_version) = (parts[0], parts[1], parts[2]);
+
+    let path = raw_path.replace(".", "/");
+    let version_path = raw_version.split(":").nth(0).unwrap_or(raw_version);
+    let version = raw_version.replace(":", "-");
+
+    format!("{path}/{raw_name}/{version_path}/{raw_name}-{version}.{extension}")
+}
+
+pub fn get_classpath_separator() -> String { String::from(if cfg!(windows) { ";" } else { ":" }) }
+
 pub fn get_config_dir() -> PathBuf { config_dir().unwrap().join("yamcl") }
 pub fn get_data_dir() -> PathBuf { data_dir().unwrap().join("yamcl") }
+
 pub fn get_client_jar_dir() -> PathBuf { get_data_dir().join("client_jars") }
 pub fn get_library_dir() -> PathBuf { get_data_dir().join("libraries") }
 pub fn get_assets_dir() -> PathBuf { get_data_dir().join("assets") }
 pub fn get_log4j_dir() -> PathBuf { get_data_dir().join("log4j_configs") }
+
+pub fn get_forge_cache_dir() -> PathBuf { get_data_dir().join("forge_cache") }

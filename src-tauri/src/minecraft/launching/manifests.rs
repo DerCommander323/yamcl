@@ -1,9 +1,9 @@
 use std::{iter, path::PathBuf, fs};
 
-use log::{error, warn};
+use log::{*};
 use reqwest::Client;
 
-use crate::{get_client_jar_dir, download_file_checked, get_log4j_dir, get_assets_dir, minecraft::modloaders::modloaders::LoaderManifests};
+use crate::{get_client_jar_dir, download_file_checked, get_log4j_dir, get_assets_dir, minecraft::modloaders::modloaders::LoaderManifests, get_classpath_separator, maven_identifier_to_path};
 
 use super::mc_structs::{MCLibrary, MCRule, MCVersionList, MCVersionDetails, MCVersionManifest, MCJvmArg, MCValue, MCGameArg, AssetIndexFile, MCLibraryDownloads, MCLibraryDownloadsArtifacts};
 
@@ -105,6 +105,7 @@ impl MCVersionManifest {
     }
 
     pub async fn get_classpath(&self, client: &Client) -> String {
+        let separator = get_classpath_separator();
         let libraries: Vec<&MCLibrary> = self.libraries
             .iter()
             .filter(|&lib| if let Some(rules) = &lib.rules {
@@ -123,7 +124,7 @@ impl MCVersionManifest {
                 self.get_client_jar(&client).await.to_string_lossy().to_string()
             ))
             .collect::<Vec<String>>()
-            .join(if cfg!(windows) { ";" } else { ":" })
+            .join(&separator)
     }
 
     pub fn get_main_class(&self) -> String {
@@ -196,10 +197,8 @@ impl MCVersionManifest {
 
                 self.libraries.append(
                     &mut fabric.libraries.iter().map(|lib| {
-                        let (raw_path, raw_name) = lib.name.split_once(":").expect("Fabric Library should contain a : seperator!");
-                        let path = format!("{}/{}/{}.jar", raw_path.replace(".", "/"), raw_name.replace(":", "/"), raw_name.replace(":", "-"));
+                        let path = maven_identifier_to_path(&lib.name);
                         
-                        warn!("path: {path}");
                         MCLibrary {
                             downloads: MCLibraryDownloads {
                                 artifact: Some(MCLibraryDownloadsArtifacts {
@@ -217,6 +216,24 @@ impl MCVersionManifest {
                         }
                     }).collect()
                 )
+            },
+            LoaderManifests::Forge(mut forge) => {
+                self.id = forge.id;
+                self.main_class = forge.main_class;
+
+                if let Some(args) = &mut self.arguments {
+                    args.game.append(&mut forge.arguments.game);
+                    args.jvm.append(&mut forge.arguments.jvm);
+                }
+
+                for lib in &mut forge.libraries {
+                    if let Some(artifact) = &mut lib.downloads.artifact {
+                        if artifact.url.is_empty() && lib.name.contains("minecraftforge") {
+                            artifact.url = format!("https://maven.minecraftforge.net/{}", maven_identifier_to_path(&lib.name))
+                        }
+                    }
+                }
+                self.libraries.append(&mut forge.libraries)
             },
         }
     }

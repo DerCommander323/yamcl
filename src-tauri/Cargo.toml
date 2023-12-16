@@ -27,6 +27,7 @@ configparser = "3.0.2"
 afire = "2.2.1"
 fastrand = "2.0.0"
 sha1_smol = "1.0.0"
+jars = "0.1.1"
 
 [features]
 # by default Tauri runs in production mode

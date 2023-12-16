@@ -4,7 +4,7 @@ use log::{info, debug, warn};
 use reqwest::Client;
 use tauri::AppHandle;
 
-use crate::{accounts::get_active_account, minecraft::{launching::mc_structs::MCVersionManifest, modloaders::{modloaders::{ModLoaders, LoaderManifests}, fabric::FabricVersionManifest}}, authentication::auth_structs::MCAccount, notify, NotificationState};
+use crate::{accounts::get_active_account, minecraft::{launching::mc_structs::MCVersionManifest, modloaders::modloaders::ModLoaders}, authentication::auth_structs::MCAccount, notify, NotificationState, get_library_dir, get_classpath_separator};
 
 use super::mc_structs::MCVersionDetails;
 
@@ -28,7 +28,7 @@ pub async fn launch_instance(
 ) -> Result<(), String> {
     info!("Launching: {minecraft_path}, Version: {version_id}, id: {instance_id}");
 
-    let args = get_arguments(version_id, loader, loader_version, minecraft_path.clone()).await?;
+    let args = get_arguments(version_id, loader, loader_version, minecraft_path.clone(), &java_path).await?;
 
     debug!("Args: {:#?}\nCustom Args: {}", args, additional_args);
     info!("Launching NOW!");
@@ -58,34 +58,37 @@ pub async fn launch_instance(
     Ok(())
 }
 
-async fn get_arguments(version_id: String, loader: ModLoaders, loader_version: String, minecraft_path: String) -> Result<Args, String> {
+async fn get_arguments(version_id: String, loader: ModLoaders, loader_version: String, minecraft_path: String, java_path: &str) -> Result<Args, String> {
     let client = Client::new();
+
     let mut account = get_active_account()
         .ok_or("Could not get the selected account!".to_string())?;
     
     account.refresh(&client, false).await;
 
-    info!("Getting compact version info for {version_id}");
+    info!("Getting version details for {version_id}");
     let compact_version = MCVersionDetails::from_id(version_id.clone(), &client)
         .await
-        .ok_or("Could not get compact Minecraft version details!".to_string())?;
+        .ok_or("Could not get Minecraft version details!".to_string())?;
 
     debug!("Got compact version info: {:?}", compact_version);
-    info!("Getting extended version info from {}", compact_version.url);
+    info!("Getting version manifest from {}", compact_version.url);
 
     let mut version = compact_version.get_manifest(&client)
         .await
-        .ok_or("Could not get extended Minecraft version details!".to_string())?;
+        .ok_or("Could not get Minecraft version manifest!".to_string())?;
 
-    match loader {
-        ModLoaders::Forge => todo!(),
-        ModLoaders::Fabric => if let Some(mf) = FabricVersionManifest::get(version_id, loader_version, &client).await {
-            version.merge_with(LoaderManifests::Fabric(mf))
-        },
-        _ => {},
+    debug!("Pre-downloading client jar...");
+    version.get_client_jar(&client).await;
+
+    if let Some(mf) = loader.get_manifest(&version_id, &loader_version, &client).await {
+        info!("Merging with manifest of {loader} Loader...");
+        version.merge_with(mf)
     }
 
-    debug!("Got extended version info. (not listed due to length)");
+    info!("Finished getting manifest.");
+
+    loader.prepare_launch(&version_id, &loader_version, &client, java_path).await;
 
     info!("Beginning argument parsing...");
     Ok(
@@ -124,6 +127,10 @@ async fn parse_arguments(args_struct: Args, account: MCAccount, version: MCVersi
         ("${user_type}", "msa".to_string()),
         ("${resolution_width}", 1200.to_string()),
         ("${resolution_height}", 800.to_string()),
+
+        // Forge specifics
+        ("${classpath_separator}", get_classpath_separator()),
+        ("${library_directory}", get_library_dir().to_string_lossy().to_string())
     ];
 
     let to_remove = vec![

@@ -26,8 +26,8 @@ pub struct FabricLibrary {
 }
 
 impl FabricVersionManifest {
-    pub async fn get(mc_ver: String, loader_ver: String, client: &Client) -> Option<Self> {
-        let url = format!("https://meta.fabricmc.net/v2/versions/loader/{mc_ver}/{loader_ver}/profile/json");
+    pub async fn get(mc_ver: &str, fabric_loader_ver: &str, client: &Client) -> Option<Self> {
+        let url = format!("https://meta.fabricmc.net/v2/versions/loader/{mc_ver}/{fabric_loader_ver}/profile/json");
         info!("Getting Fabric version manifest from {url}...");
 
         match client.get(url).send().await.unwrap().json::<Self>().await {
