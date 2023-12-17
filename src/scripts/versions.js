@@ -1,19 +1,5 @@
 /**
- * @type {{
- *      latest: {
- *          release: string,
- *          snapshot: string
- *      },
- *      versions: {
- *          "id": string,
- *          "type": "snapshot" | "release" | "old_beta" | "old_alpha",
- *          "url": string,
- *          "time": string,
- *          "releaseTime": string,
- *          "sha1": string,
- *          "complianceLevel": number
- *      }[]
- * }}
+ * @type {MCVersionList}
  */
 export let minecraftVersionList
 

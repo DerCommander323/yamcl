@@ -221,9 +221,12 @@ impl MCVersionManifest {
                 self.id = forge.id;
                 self.main_class = forge.main_class;
 
-                if let Some(args) = &mut self.arguments {
-                    args.game.append(&mut forge.arguments.game);
-                    args.jvm.append(&mut forge.arguments.jvm);
+                if let (Some(args), Some(forge_args)) = (&mut self.arguments, &mut forge.arguments) {
+                    args.game.append(&mut forge_args.game);
+                    args.jvm.append(&mut forge_args.jvm);
+                }
+                if let Some(forge_mcargs) = &mut forge.minecraft_arguments {
+                    self.minecraft_arguments = Some(forge_mcargs.to_string())
                 }
 
                 for lib in &mut forge.libraries {

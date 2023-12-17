@@ -1,10 +1,10 @@
 use std::process::Command;
 
-use log::{info, debug, warn};
+use log::{*};
 use reqwest::Client;
 use tauri::AppHandle;
 
-use crate::{accounts::get_active_account, minecraft::{launching::mc_structs::MCVersionManifest, modloaders::modloaders::ModLoaders}, authentication::auth_structs::MCAccount, notify, NotificationState, get_library_dir, get_classpath_separator};
+use crate::{accounts::get_active_account, minecraft::{launching::mc_structs::MCVersionManifest, instances::SimpleInstance, java::JavaDetails}, authentication::auth_structs::MCAccount, notify, NotificationState, get_library_dir, get_classpath_separator};
 
 use super::mc_structs::MCVersionDetails;
 
@@ -17,24 +17,21 @@ struct Args {
 
 #[tauri::command(async)]
 pub async fn launch_instance(
-    minecraft_path: String,
-    version_id: String,
-    loader_version: String,
-    loader: ModLoaders,
-    java_path: String,
-    additional_args: String,
-    instance_id: u32,
+    instance: SimpleInstance,
+    java: JavaDetails,
     app_handle: AppHandle
 ) -> Result<(), String> {
-    info!("Launching: {minecraft_path}, Version: {version_id}, id: {instance_id}");
+    let SimpleInstance { path, name: _, icon: _, id, mc_version, modloader: _, last_played: _, instance_type: _ } = instance.clone();
+    info!("Launching: {path}, Version: {mc_version}, id: {id}");
 
-    let args = get_arguments(version_id, loader, loader_version, minecraft_path.clone(), &java_path).await?;
+    let args = get_arguments(&instance, &java).await?;
+    let additional_args = java.get_args();
 
     debug!("Args: {:#?}\nCustom Args: {}", args, additional_args);
     info!("Launching NOW!");
 
-    let mut process = Command::new(java_path)
-    .current_dir(&minecraft_path)
+    let mut process = Command::new(java.path)
+    .current_dir(&path)
     .args(additional_args.split_whitespace())
     .args(args.jvm)
     .arg(args.main_class)
@@ -42,32 +39,34 @@ pub async fn launch_instance(
     .spawn()
     .or_else(|err| Err(format!("Failed to run Minecraft command: {}", err.to_string())))?;
 
-    notify(&app_handle, &format!("{}_status", instance_id), "Instance launched successfully!", NotificationState::Success);
+    notify(&app_handle, &format!("{}_status", id), "Instance launched successfully!", NotificationState::Success);
 
     let exit_status = process.wait().expect("Failed to wait on Java process! How did this happen?");
     info!("Exited with status: {}", exit_status);
 
     if exit_status.success() {
-        info!("{minecraft_path} exited successfully.");
-        notify(&app_handle, &format!("{}_status", instance_id), "Instance exited successfully.", NotificationState::Success);
+        info!("{path} exited successfully.");
+        notify(&app_handle, &format!("{}_status", id), "Instance exited successfully.", NotificationState::Success);
     } else {
-        warn!("{minecraft_path} exited (crashed) with status {}", exit_status);
-        notify(&app_handle, &format!("{}_status", instance_id), &format!("Instance crashed with code {}", exit_status.code().unwrap_or(323)), NotificationState::Error);
+        warn!("{path} exited (crashed) with status {}", exit_status);
+        notify(&app_handle, &format!("{}_status", id), &format!("Instance crashed with code {}", exit_status.code().unwrap_or(323)), NotificationState::Error);
     }
 
     Ok(())
 }
 
-async fn get_arguments(version_id: String, loader: ModLoaders, loader_version: String, minecraft_path: String, java_path: &str) -> Result<Args, String> {
+async fn get_arguments(instance: &SimpleInstance, java: &JavaDetails) -> Result<Args, String> {
     let client = Client::new();
+
+    let loader = instance.modloader.typ;
 
     let mut account = get_active_account()
         .ok_or("Could not get the selected account!".to_string())?;
     
     account.refresh(&client, false).await;
 
-    info!("Getting version details for {version_id}");
-    let compact_version = MCVersionDetails::from_id(version_id.clone(), &client)
+    info!("Getting version details for {}", instance.mc_version);
+    let compact_version = MCVersionDetails::from_id(instance.mc_version.clone(), &client)
         .await
         .ok_or("Could not get Minecraft version details!".to_string())?;
 
@@ -81,14 +80,14 @@ async fn get_arguments(version_id: String, loader: ModLoaders, loader_version: S
     debug!("Pre-downloading client jar...");
     version.get_client_jar(&client).await;
 
-    if let Some(mf) = loader.get_manifest(&version_id, &loader_version, &client).await {
+    if let Some(mf) = loader.get_manifest(&instance.mc_version, &instance.modloader.version, &client).await {
         info!("Merging with manifest of {loader} Loader...");
         version.merge_with(mf)
     }
 
     info!("Finished getting manifest.");
 
-    loader.prepare_launch(&version_id, &loader_version, &client, java_path).await;
+    loader.prepare_launch(&instance.mc_version, &instance.modloader.version, &client, &java.path).await;
 
     info!("Beginning argument parsing...");
     Ok(
@@ -100,13 +99,13 @@ async fn get_arguments(version_id: String, loader: ModLoaders, loader_version: S
             },
             account,
             version,
-            minecraft_path,
+            &instance.path,
             &client
         ).await
     )
 }
 
-async fn parse_arguments(args_struct: Args, account: MCAccount, version: MCVersionManifest, minecraft_path: String, client: &Client) -> Args {
+async fn parse_arguments(args_struct: Args, account: MCAccount, version: MCVersionManifest, minecraft_path: &str, client: &Client) -> Args {
     let replacements = vec![
         ("${auth_player_name}", account.mc_profile.name),
         ("${auth_uuid}", account.mc_profile.id),
@@ -123,7 +122,7 @@ async fn parse_arguments(args_struct: Args, account: MCAccount, version: MCVersi
         ("${natives_directory}", format!("{minecraft_path}/natives")),
         ("${launcher_name}", "yamcl".to_string()),
         ("${launcher_version}", "323".to_string()),
-        ("${game_directory}", minecraft_path),
+        ("${game_directory}", minecraft_path.to_string()),
         ("${user_type}", "msa".to_string()),
         ("${resolution_width}", 1200.to_string()),
         ("${resolution_height}", 800.to_string()),

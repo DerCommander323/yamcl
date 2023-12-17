@@ -44,12 +44,11 @@ impl ForgeInstaller {
     pub async fn extract_needed(mc_ver: &str, forge_ver: &str, client: &Client) {
         let installer = Self::download(&mc_ver, &forge_ver, client).await;
 
-
         debug!("Extracting installer jar...");
         let jar = jars::jar(
             installer, 
             JarOptionBuilder::builder()
-            .targets(&vec!["version.json", "install_profile.json", "data", "META-INF"])
+            .targets(&vec!["version.json", "install_profile.json", "data"])
             .ext("the library has a bug that requires both of these to be set") // otherwise it will always extract all files
             .build()
         ).expect("Failed to extract Forge installer jar!");
@@ -93,20 +92,7 @@ impl ForgeProcessor {
 
         let args = self.parse_args(install_profile, side);
 
-        let jar = jars::jar(
-            get_library_dir().join(maven_identifier_to_path(&self.jar)), 
-            JarOptionBuilder::builder().keep_meta_info().target("META-INF/MANIFEST.MF").build()    
-        ).expect("Failed to open jar!");
-
-        let jar_mf = String::from_utf8_lossy(
-            jar.files.iter().find(|&(path, _)| {
-                path == "META-INF/MANIFEST.MF"
-            }).expect("Could not find MANIFEST.MF in jar!").1
-        );
-        
-        let main_class = jar_mf.split("\n").find(|&line| {
-            line.starts_with("Main-Class:")
-        }).unwrap().split_once(": ").unwrap().1.trim();
+        let main_class = get_jar_main_class(get_library_dir().join(maven_identifier_to_path(&self.jar)));
 
         info!("Running processor...");
 
@@ -169,6 +155,30 @@ pub enum Side {
     Client
 }
 
+pub fn get_jar_main_class(jar_path: PathBuf) -> String {
+    let jar = jars::jar(
+        &jar_path,
+        JarOptionBuilder::builder()
+        .keep_meta_info().target("META-INF/MANIFEST.MF")
+        .ext("MF")
+        .build()    
+    ).expect(&format!("Failed to open jar {jar_path:?}"));
+
+    let jar_mf = String::from_utf8_lossy(
+        jar.files.iter().find(|&(path, _)| {
+            path == "META-INF/MANIFEST.MF"
+        }).expect(&format!("Could not find MANIFEST.MF in jar {jar_path:?}")).1
+    );
+
+    let main_class = jar_mf.split("\n").find(|&line| {
+        line.starts_with("Main-Class:")
+    }).expect(&format!("Could not find main class in jar manifest {jar_mf}"))
+    .split_once(": ")
+    .unwrap()
+    .1.trim();
+
+    main_class.to_string()
+}
 
 pub fn get_installer_extracts_dir(mc_ver: &str, forge_ver: &str) -> PathBuf {
     get_forge_cache_dir().join(format!("forge-{mc_ver}-{forge_ver}"))

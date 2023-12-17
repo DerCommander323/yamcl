@@ -1,24 +1,31 @@
 <script>
     import { launchInstance } from "../scripts/instances"
 
-    export let name = "Fallback Name!"
-    export let icon = "default_instance.png"
+    // export let name = "Fallback Name!"
+    // export let icon = "default_instance.png"
+    // /**
+    //  * @type {number}
+    //  */
+    // export let id
+    // /**
+    //  * @type {string}
+    //  */
+    // export let path
+    // /**
+    //  @type {{ name: string; version: string; typ: string }}
+    // /
+    //  export let modloader
+    // /**
+    //  * @type {string}
+    //  */
+    // export let version
+
     /**
-     * @type {number}
+     * @type {SimpleInstance}
      */
-    export let id
-    /**
-     * @type {string}
-     */
-    export let path
-    /**
-   * @type {{ name: string; version: string; typ: string }}
-   */
-     export let modloader
-    /**
-     * @type {string}
-     */
-    export let version
+    export let instance
+
+    let { id, name, mc_version, modloader, icon } = instance
 
     let hover = false
     let buttonHover = false
@@ -26,7 +33,7 @@
     let errorCount = 0
 
     const launch = () => {
-        launchInstance(path, name, version, id, modloader.version, modloader.typ)
+        launchInstance(instance)
     }
 
     
@@ -57,7 +64,7 @@
     <div class="p-1 text-gray-300 whitespace-nowrap overflow-hidden">
         <p class="text-xl font-semibold w-full overflow-ellipsis overflow-hidden"> { name } </p>
         <div class="flex text-sm w-full">
-            <p> { version } </p>
+            <p> { mc_version } </p>
             <p class="pr-1">,</p>
             <p> { modloader.name } </p>
         </div>

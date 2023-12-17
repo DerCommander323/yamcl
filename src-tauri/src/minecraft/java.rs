@@ -1,6 +1,17 @@
 use std::process::Command;
 
-use log::{info, warn};
+use log::{*};
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
+pub struct JavaDetails {
+    pub path: String,
+    pub label: String,
+    pub version: String,
+    pub xmx: u32,
+    pub xms: u32,
+    pub args: String
+}
 
 #[tauri::command(async)]
 pub fn get_java_version(path: String, args: String) -> Result<String, String> {
@@ -21,5 +32,11 @@ pub fn get_java_version(path: String, args: String) -> Result<String, String> {
             warn!("Java command failed:\n{}", String::from_utf8(output.clone()).unwrap());
             Err(String::from_utf8(output).unwrap())
         }
+    }
+}
+
+impl JavaDetails {
+    pub fn get_args(&self) -> String {
+        format!("-Xmx{}M -Xms{}M {}", self.xmx, self.xms, self.args)
     }
 }

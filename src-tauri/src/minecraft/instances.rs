@@ -1,38 +1,34 @@
 use std::fs::{DirEntry, read_to_string, write};
 
+use chrono::NaiveDateTime;
 use configparser::ini::Ini;
 use log::debug;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{Manager, AppHandle};
 
 use super::modloaders::modloaders::{self, ModLoaders};
 
-#[derive(Clone, serde::Serialize)]
-struct SimpleInstance {
-    name: String,
-    icon: String,
-    path: String,
-    id: u32,
-    mc_version: String,
-    modloader: ModLoader,
-    last_played: LastPlayed,
-    instance_type: InstanceType
+#[derive(Clone, Serialize, Deserialize)]
+pub struct SimpleInstance {
+    pub name: String,
+    pub icon: String,
+    pub path: String,
+    pub id: u32,
+    pub mc_version: String,
+    pub modloader: ModLoader,
+    pub last_played: Option<NaiveDateTime>,
+    pub instance_type: InstanceType
 }
 
-#[derive(Clone, serde::Serialize)]
-enum LastPlayed {
-    String(String),
-    Epoch(u64),
-    Never
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ModLoader {
+    pub name: String,
+    pub typ: modloaders::ModLoaders,
+    pub version: String
 }
-#[derive(Clone, Debug, serde::Serialize)]
-struct ModLoader {
-    name: String,
-    typ: modloaders::ModLoaders,
-    version: String
-}
-#[derive(Clone, Debug, serde::Serialize)]
-enum InstanceType {
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum InstanceType {
     CurseForge,
     MultiMC
 }
@@ -79,7 +75,10 @@ pub fn handle_instance_cf(dir: DirEntry, app_handle: AppHandle) {
                 }
             }
         },
-        last_played: if let Some(string) = json["lastPlayed"].as_str() { LastPlayed::String(string.into()) } else { LastPlayed::Never },
+        last_played: if let Some(string) = json["lastPlayed"].as_str() {
+            let time = NaiveDateTime::parse_and_remainder(string, "%Y-%m-%dT%H:%M:%S").unwrap().0;
+            if time.timestamp() < 5 { None } else { Some(time) }
+        } else { None },
         instance_type: InstanceType::CurseForge,
     }.into())
 }
@@ -129,9 +128,9 @@ pub fn handle_instance_mmc(dir: DirEntry, app_handle: AppHandle) {
         },
         last_played: if let Some(last_launch_time) = config.get("default","lastLaunchTime") {
             if let Ok(last_played) = last_launch_time.parse::<u64>() {
-                LastPlayed::Epoch(last_played)
-            } else { LastPlayed::Never }
-        } else { LastPlayed::Never },
+                NaiveDateTime::from_timestamp_millis(last_played.try_into().unwrap())
+            } else { None }
+        } else { None },
         instance_type: InstanceType::MultiMC
     });
 }

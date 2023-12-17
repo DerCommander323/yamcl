@@ -8,13 +8,9 @@ import { createNotification, finishNotification } from "./notificationSystem"
 import { getJavaForVersion } from "./javas"
 
 /**
- * @type {import("svelte/store").Writable<{name: string, icon: string, path: string, id: number, last_played: Date, modloader: {name: string, version: string, typ: string}, mc_version: string}[]>}
+ * @type {import("svelte/store").Writable<SimpleInstance[]>}
  */
 export const instanceStore = writable([])
-/**
- * @type {{name: string, icon: string, path: string, id: number, last_played: Date, modloader: {name: string, version: string, typ: string}, mc_version: string}[]}
- */
-let instanceList = []
 export let instancesFinished = false
 
 const prismIcons = [
@@ -42,7 +38,8 @@ export async function gatherInstances() {
         return
     }
     
-    await listen('instance_create', async (event) => {
+
+    await listen('instance_create', /** @param {import("@tauri-apps/api/event").Event<SimpleInstance>} event */ async (event) => {
         //Icon handling
         const default_icon = 'default_instance.png'
         let ic = event.payload.icon
@@ -67,53 +64,58 @@ export async function gatherInstances() {
         } else {
             event.payload.icon = iconPath ? convertFileSrc(await join(iconPath, ic)) : default_icon
         }
-
-        //Date handling
-        event.payload.last_played = new Date(event.payload.last_played['Epoch'] ?? event.payload.last_played['String'])
         
-        instanceList.push(event.payload)
+        instanceStore.update(val => [...val, event.payload])
     })
 
-    invoke('get_instances', { path: instancePath})
+    await invoke('get_instances', { path: instancePath})
 }
 
 listen('instance_finish', async (event) => {
     if(instancesFinished) return
-    if(instanceList.length == event.payload) {
-        //Sort by last played (needs to be updated once multiple sorting options are added (Soon™))
-        instanceList = instanceList.sort((a,b) => b.last_played.getTime() - a.last_played.getTime())
-        instanceStore.set(instanceList)
-        finishNotification('instance_gather', `Finished gathering <b class="font-semibold mx-1">${event.payload}</b> Instances!`, 'success')
-        instancesFinished = true
-    } else {
-        setTimeout(() => {
-            emit('instance_finish', event.payload)
-        }, 50)
-    }
+
+    instanceStore.update(instances => {
+        if(instances.length == event.payload) {
+            finishNotification('instance_gather', `Finished gathering <b class="font-semibold mx-1">${event.payload}</b> Instances!`, 'success')
+            instancesFinished = true
+            return instances.sort((a,b) => !a.last_played || !b.last_played ? -1 : new Date(b.last_played).getTime() - new Date(a.last_played).getTime())
+        } else {
+            setTimeout(() => {
+                emit('instance_finish', event.payload)
+            }, 50)
+            return instances
+        }
+    })
+
+    //if(instanceList.length == event.payload) {
+    //    //Sort by last played (needs to be updated once multiple sorting options are added (Soon™))
+//
+    //} else {
+//
+    //}
 })
 
 /**
- * @param {String} mcPath
- * @param {String} instanceName
- * @param {String} mcVer
- * @param {String} loaderVersion
- * @param {String} loader
- * @param {Number} instanceId
+ * @param {SimpleInstance} instance
  */
-export async function launchInstance(mcPath, instanceName, mcVer, instanceId, loaderVersion, loader) {
-    console.log(`Launching instance: ${instanceName}...`)
-    createNotification(`instance_launch_${instanceId}`, `Launching '${instanceName}'...`)
-    getJavaForVersion(mcVer).then(async java => {
+export async function launchInstance(instance) {
+    let { name, id, mc_version } = instance
+    console.log(`Launching instance: ${name}...`)
+    createNotification(`instance_launch_${id}`, `Launching '${name}'...`)
+    getJavaForVersion(mc_version).then(async (java) => {
         console.log(`Using java path: ${java.path}, with args ${java.args}`)
-        const unlisten = await listen(`notification_${instanceId}_status`, event => {
+        const unlisten = await listen(`notification_${id}_status`, event => {
             console.warn(event)
-            finishNotification(`instance_launch_${instanceId}`, event.payload.text, event.payload.status)
+            finishNotification(`instance_launch_${id}`, event.payload.text, event.payload.status)
         })
-        await invoke('launch_instance', {
-            minecraftPath: mcPath, versionId: mcVer, javaPath: java.path, additionalArgs: java.args, instanceId, loaderVersion, loader
+        await invoke('launch_instance',
+            { instance, java }
+        ).catch(e => {
+            finishNotification(`instance_launch_${id}`, `Failed to launch instance ${name}: ${e}!`, 'error')
+            console.error(e)
         })
     }).catch(e => {
-        finishNotification(`instance_launch_${instanceId}`, `Failed to get Java version for Minecraft version ${mcVer}!`, 'error')
+        finishNotification(`instance_launch_${id}`, `Failed to get Java version for Minecraft version ${mc_version}!`, 'error')
         console.error(e)
     })
 }

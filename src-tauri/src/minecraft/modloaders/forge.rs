@@ -12,7 +12,8 @@ use super::forge_installer::{ForgeInstaller, get_manifest_path, get_install_prof
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ForgeVersionManifest {
-    pub arguments: MCArguments,
+    pub arguments: Option<MCArguments>,
+    pub minecraft_arguments: Option<String>,
     pub id: String,
     pub libraries: Vec<MCLibrary>,
     pub main_class: String,
@@ -74,6 +75,11 @@ impl ForgeInstallProfile {
     pub async fn download_libraries(&mut self, client: &Client) {
         info!("Downloading installer libraries...");
         for lib in &mut self.libraries {
+            if let Some(artifact) = &mut lib.downloads.artifact {
+                if artifact.url.is_empty() && lib.name.contains("minecraftforge") {
+                    artifact.url = format!("https://maven.minecraftforge.net/{}", maven_identifier_to_path(&lib.name))
+                }
+            }
             lib.download_checked(client).await;
         }
     }

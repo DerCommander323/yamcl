@@ -9,12 +9,12 @@ import { createNotification, finishNotification } from "./notificationSystem";
 
 
 /**
- * @type {import("svelte/store").Writable<{ path: string, label: string, version: string,  mcVersions: {min: typeof minecraftVersionList.versions[0], max: typeof minecraftVersionList.versions[0]}, xmx:number, xms: number, args: string, extended: boolean, mcExtended: boolean }[]>}
+ * @type {import("svelte/store").Writable<JavaDetails[]>}
  */
 export const javaStore = writable([])
 
 /**
- * @type {{ path: string, label: string, version: string,  mcVersions: {min: typeof minecraftVersionList.versions[0], max: typeof minecraftVersionList.versions[0]}, xmx:number, xms: number, args: string, extended: boolean, mcExtended: boolean }[]}
+ * @type {JavaDetails[]}
  */
 let javaSettings = []
 
@@ -25,7 +25,7 @@ export async function getJavaSettings() {
 
 export function saveJavaSettings() {
     /**
-   * @type {{ path: string, label: string, version: string, mcVersions: {min: typeof minecraftVersionList.versions[0], max: typeof minecraftVersionList.versions[0]}, xmx:number, xms: number, args: string, }[]}
+   * @type {{ path: String, label: String, version: String, mcVersions: {min: MCVersion, max: MCVersion}, xmx: Number, xms: Number, args: String, }[]}
    */
     let _savedJavaSettings = []
     javaSettings.forEach(e => {
@@ -44,11 +44,11 @@ export function addJavaSetting() {
 }
 
 /**
- * @param {number} index
+ * @param {Number} index
  */
 export async function deleteJavaSetting(index) {
     let confirmation = await confirm(
-        `Are you sure you want to delete '${javaSettings[index].label}'?\nThis Action is irreversible, however you can re-add it at any time.`,
+        `Are you sure you want to delete '${javaSettings[index].label}'?\nThis Action is irreversible, however you can manually re-add it at any time.`,
         { title: 'Confirm Deletion', type: 'warning'}
     )
     if(confirmation) {
@@ -59,7 +59,7 @@ export async function deleteJavaSetting(index) {
 }
 
 /**
- * @param {number} index Index of the Java in javaSettings
+ * @param {Number} index Index of the Java in javaSettings
  * @param {'min' | 'max'} minmax The Property in the javaSetting
  * @param {any} value The new value for the Property
  */
@@ -72,7 +72,7 @@ export function updateJavaMcVersions(index, minmax, value) {
 }
 
 /**
- * @param {number} index Index of the Java in javaSettings
+ * @param {Number} index Index of the Java in javaSettings
  */
 function getJavaArgs(index) {
     let j = javaSettings[index]
@@ -80,7 +80,7 @@ function getJavaArgs(index) {
 }
 
 /**
-* @param {number} index Index of the Java in javaSettings
+* @param {Number} index Index of the Java in javaSettings
 */
 export async function testJavaVersion(index) {
     let java = javaSettings[index]
@@ -101,9 +101,9 @@ export async function testJavaVersion(index) {
 }
 
 /**
-* @param {string} path The Java binary path
-* @param {string} args Args to run it with
-* @returns {Promise<string>} The 'java -version' output if successful
+* @param {String} path The Java binary path
+* @param {String} args Args to run it with
+* @returns {Promise<String>} The 'java -version' output if successful
 */
 export async function getJavaVersion(path, args) {
     return new Promise((resolve, reject) => {
@@ -118,8 +118,8 @@ export async function getJavaVersion(path, args) {
 }
 
 /**
- * @param {string} mcVer The requested Minecraft version
- * @returns {Promise<any>} The Java version to use for mc_ver
+ * @param {String} mcVer The requested Minecraft version
+ * @returns {Promise<JavaDetails>} The Java version to use for mc_ver
  */
 export async function getJavaForVersion(mcVer) {
 
@@ -142,18 +142,19 @@ export async function getJavaForVersion(mcVer) {
 }
 
 /**
-* @param {number} index Index of the Java in javaSettings
+* @param {Number} index Index of the Java in javaSettings
 */
 export async function setJavaPath(index) {
     /**
-     * @type String
+     * @type {String | null}
     */
-    //@ts-ignore
+    // @ts-ignore
     let dir = await open({
         multiple: false
     })
 
-    if(dir==null) return
+    if(!dir) return
+
     javaSettings[index].path = dir
     testJavaVersion(index)
 }
