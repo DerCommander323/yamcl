@@ -43,6 +43,22 @@ impl ModLoaders {
             _ => None,
         }
     }
+
+    pub fn from_uid(mmc_uid: &str) -> Option<Self> {
+        MMC_LOADERS.iter().find(|&loader| {
+            loader.0 == mmc_uid
+        }).map_or(None, |v| Some(v.1))
+    }
+    
+    pub fn from_cf(cf_name: &str) -> Option<Self> {
+        if let Some(name) = cf_name.split('-').nth(0) {
+            STRING_LOADERS.iter().find(|&loader| {
+                loader.0 == name
+            }).map_or(None, |v| Some(v.1))
+        } else {
+            None
+        }
+    }
 }
 
 impl fmt::Display for ModLoaders {
@@ -63,17 +79,3 @@ const STRING_LOADERS: [(&str, ModLoaders); 2] = [
     ("fabric", ModLoaders::Fabric),
 ];
 
-pub fn from_uid(mmc_uid: &str) -> Option<ModLoaders> {
-    MMC_LOADERS.iter().find(|&loader| {
-        loader.0 == mmc_uid
-    }).map_or(None, |v| Some(v.1))
-}
-pub fn from_cf(cf_name: &str) -> Option<ModLoaders> {
-    if let Some(name) = cf_name.split('-').nth(0) {
-        STRING_LOADERS.iter().find(|&loader| {
-            loader.0 == name
-        }).map_or(None, |v| Some(v.1))
-    } else {
-        None
-    }
-}

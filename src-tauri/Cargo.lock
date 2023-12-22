@@ -414,12 +414,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "configparser"
-version = "3.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5458d9d1a587efaf5091602c59d299696a3877a439c8f6d461a2d3cce11df87a"
-
-[[package]]
 name = "constant_time_eq"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1765,9 +1759,9 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "0.8.8"
+version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "927a765cd3fc26206e66b296465fa9d3e5ab003e651c1b3c060e7956d96b19d2"
+checksum = "8f3d0b296e374a4e6f3c7b0a1f5a51d748a0d34c85e7dc48fc3fa9a87657fe09"
 dependencies = [
  "libc",
  "wasi 0.11.0+wasi-snapshot-preview1",
@@ -2555,6 +2549,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "result"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "194d8e591e405d1eecf28819740abed6d719d1a2db87fc0bcdedee9a26d55560"
+
+[[package]]
 name = "rfd"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2724,6 +2724,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.38",
+]
+
+[[package]]
+name = "serde_ini"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb236687e2bb073a7521c021949be944641e671b8505a94069ca37b656c81139"
+dependencies = [
+ "result",
+ "serde",
+ "void",
 ]
 
 [[package]]
@@ -3371,18 +3382,18 @@ checksum = "8eaa81235c7058867fa8c0e7314f33dcce9c215f535d1913822a2b3f5e289f3c"
 
 [[package]]
 name = "thiserror"
-version = "1.0.50"
+version = "1.0.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9a7210f5c9a7156bb50aa36aed4c95afb51df0df00713949448cf9e97d382d2"
+checksum = "f11c217e1416d6f036b870f14e0413d480dbf28edbee1f877abaf0206af43bb7"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.50"
+version = "1.0.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "266b2e40bc00e5a6c09c3584011e08b06f123c00362c92b975ba9843aaaa14b8"
+checksum = "01742297787513b79cf8e29d1056ede1313e2420b7b3b15d0a768b4921f549df"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3447,9 +3458,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.33.0"
+version = "1.35.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f38200e3ef7995e5ef13baec2f432a6da0aa9ac495b2c0e8f3b7eec2c92d653"
+checksum = "841d45b238a16291a4e1584e61820b8ae57d696cc5015c459c229ccc6990cc1c"
 dependencies = [
  "backtrace",
  "bytes",
@@ -3725,6 +3736,12 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+
+[[package]]
+name = "void"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
 
 [[package]]
 name = "vswhom"
@@ -4328,21 +4345,23 @@ dependencies = [
 
 [[package]]
 name = "yamcl"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "afire",
  "chrono",
- "configparser",
  "fastrand",
  "jars",
  "log",
  "reqwest",
  "serde",
+ "serde_ini",
  "serde_json",
  "sha1_smol",
  "simple_logger",
  "tauri",
  "tauri-build",
+ "thiserror",
+ "tokio",
  "uuid",
 ]
 

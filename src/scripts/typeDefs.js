@@ -21,8 +21,9 @@
  * SimpleInstance Struct
  * @typedef {{
  *  name: String,
- *  icon: String,
- *  path: String,
+ *  icon_path: String,
+ *  instance_path: String,
+*   minecraft_path: String,
  *  id: Number,
  *  mc_version: String,
  *  modloader: ModLoader,

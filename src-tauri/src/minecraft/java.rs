@@ -3,7 +3,7 @@ use std::process::Command;
 use log::{*};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct JavaDetails {
     pub path: String,
     pub label: String,

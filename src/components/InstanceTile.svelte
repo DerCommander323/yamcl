@@ -1,31 +1,12 @@
 <script>
     import { launchInstance } from "../scripts/instances"
 
-    // export let name = "Fallback Name!"
-    // export let icon = "default_instance.png"
-    // /**
-    //  * @type {number}
-    //  */
-    // export let id
-    // /**
-    //  * @type {string}
-    //  */
-    // export let path
-    // /**
-    //  @type {{ name: string; version: string; typ: string }}
-    // /
-    //  export let modloader
-    // /**
-    //  * @type {string}
-    //  */
-    // export let version
-
     /**
      * @type {SimpleInstance}
      */
     export let instance
 
-    let { id, name, mc_version, modloader, icon } = instance
+    let { id, name, mc_version, modloader, icon_path } = instance
 
     let hover = false
     let buttonHover = false
@@ -38,12 +19,9 @@
 
     
     const onError = (/** @type {any} */ e) => {
-        if(errorCount > 3) {
-            e.target.src="default_instance.png"
-        } else {
-            errorCount++
-            if(!e.target.src.endsWith('.png')) e.target.src = e.target.src + '.png'
-        }
+        errorCount++
+        if (errorCount > 2) return
+        e.target.src="default_instance.png"
     }
 
     const enableHover = () => hover = true
@@ -59,7 +37,7 @@
     class="m-1.5 bg-[var(--bg-secondary)] rounded-lg text-lg border border-[var(--bg-secondary)] hover:border-purple-700 duration-150 inline-grid relative cursor-pointer"
 >
     <div class="rounded-t-lg">
-        <img on:error={onError} src={icon} alt="Instance Icon" class="w-full rounded-t-lg bg-[#1d1e21] border-4 border-[var(--bg-secondary)]"/>
+        <img on:error={onError} src={icon_path} alt="Instance Icon" class="w-full rounded-t-lg bg-[#1d1e21] border-4 border-[var(--bg-secondary)]"/>
     </div>
     <div class="p-1 text-gray-300 whitespace-nowrap overflow-hidden">
         <p class="text-xl font-semibold w-full overflow-ellipsis overflow-hidden"> { name } </p>

@@ -4,7 +4,7 @@ use log::{info, debug, error};
 use reqwest::Client;
 use serde_json::json;
 use tauri::{AppHandle, async_runtime::block_on};
-use crate::{auth_structs::*, notify, NotificationState, authentication::accounts::{save_new_account, update_account}};
+use crate::{authentication::auth_structs::*, notify, NotificationState, configuration::accounts::{save_new_account, update_account}};
 
 
 const MS_CLIENT_ID: &str = "5431ff2d-20f8-415b-aa2f-5218eba055ea"; // The Yet Another MC Launcher client_id. If you fork this project, please make sure to use your own!

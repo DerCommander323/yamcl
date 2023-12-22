@@ -1,10 +1,10 @@
-use std::process::Command;
+use std::{process::Command, path::PathBuf};
 
 use log::{*};
 use reqwest::Client;
 use tauri::AppHandle;
 
-use crate::{accounts::get_active_account, minecraft::{launching::mc_structs::MCVersionManifest, instances::SimpleInstance, java::JavaDetails}, authentication::auth_structs::MCAccount, notify, NotificationState, get_library_dir, get_classpath_separator};
+use crate::{minecraft::{launching::mc_structs::MCVersionManifest, instances::instances::SimpleInstance, java::JavaDetails}, authentication::auth_structs::MCAccount, notify, NotificationState, get_library_dir, get_classpath_separator, configuration::accounts::get_active_account};
 
 use super::mc_structs::MCVersionDetails;
 
@@ -21,8 +21,8 @@ pub async fn launch_instance(
     java: JavaDetails,
     app_handle: AppHandle
 ) -> Result<(), String> {
-    let SimpleInstance { path, name: _, icon: _, id, mc_version, modloader: _, last_played: _, instance_type: _ } = instance.clone();
-    info!("Launching: {path}, Version: {mc_version}, id: {id}");
+    let SimpleInstance { minecraft_path, name: _, icon_path: _, id, mc_version, modloader: _, last_played: _, instance_type: _, instance_path: _ } = instance.clone();
+    info!("Launching: {minecraft_path:?}, Version: {mc_version}, id: {id}");
 
     let args = get_arguments(&instance, &java).await?;
     let additional_args = java.get_args();
@@ -31,7 +31,7 @@ pub async fn launch_instance(
     info!("Launching NOW!");
 
     let mut process = Command::new(java.path)
-    .current_dir(&path)
+    .current_dir(&minecraft_path)
     .args(additional_args.split_whitespace())
     .args(args.jvm)
     .arg(args.main_class)
@@ -45,10 +45,10 @@ pub async fn launch_instance(
     info!("Exited with status: {}", exit_status);
 
     if exit_status.success() {
-        info!("{path} exited successfully.");
+        info!("{minecraft_path:?} exited successfully.");
         notify(&app_handle, &format!("{}_status", id), "Instance exited successfully.", NotificationState::Success);
     } else {
-        warn!("{path} exited (crashed) with status {}", exit_status);
+        warn!("{minecraft_path:?} exited (crashed) with status {}", exit_status);
         notify(&app_handle, &format!("{}_status", id), &format!("Instance crashed with code {}", exit_status.code().unwrap_or(323)), NotificationState::Error);
     }
 
@@ -99,13 +99,13 @@ async fn get_arguments(instance: &SimpleInstance, java: &JavaDetails) -> Result<
             },
             account,
             version,
-            &instance.path,
+            &instance.minecraft_path,
             &client
         ).await
     )
 }
 
-async fn parse_arguments(args_struct: Args, account: MCAccount, version: MCVersionManifest, minecraft_path: &str, client: &Client) -> Args {
+async fn parse_arguments(args_struct: Args, account: MCAccount, version: MCVersionManifest, minecraft_path: &PathBuf, client: &Client) -> Args {
     let replacements = vec![
         ("${auth_player_name}", account.mc_profile.name),
         ("${auth_uuid}", account.mc_profile.id),
@@ -119,10 +119,10 @@ async fn parse_arguments(args_struct: Args, account: MCAccount, version: MCVersi
         ("${assets_index_name}", version.asset_index.id),
         ("${version_type}", version.typ),
 
-        ("${natives_directory}", format!("{minecraft_path}/natives")),
+        ("${natives_directory}", format!("{minecraft_path:?}/natives")),
         ("${launcher_name}", "yamcl".to_string()),
         ("${launcher_version}", "323".to_string()),
-        ("${game_directory}", minecraft_path.to_string()),
+        ("${game_directory}", minecraft_path.to_string_lossy().to_string()),
         ("${user_type}", "msa".to_string()),
         ("${resolution_width}", 1200.to_string()),
         ("${resolution_height}", 800.to_string()),

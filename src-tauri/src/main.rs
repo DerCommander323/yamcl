@@ -10,7 +10,7 @@ use reqwest::Client;
 use sha1_smol::Sha1;
 use simple_logger::SimpleLogger;
 use tauri::{AppHandle, Manager, api::path::{data_dir, config_dir}};
-use authentication::{auth, auth_structs, accounts};
+use authentication::auth;
 use minecraft::{launching, java};
 
 mod minecraft {
@@ -27,13 +27,23 @@ mod minecraft {
         pub mod forge_installer;
     }
     pub mod java;
-    pub mod instances;
+    pub mod instances {
+        pub mod instances;
+        pub mod errors;
+        pub mod curseforge;
+        pub mod multimc;
+    }
 }
 mod authentication { 
     pub mod auth;
     pub mod auth_structs;
-    pub mod accounts;
 }
+mod configuration {
+    pub mod accounts;
+    pub mod settings;
+}
+
+
 
 #[derive(serde::Serialize, Clone)]
 struct Notification {
@@ -57,15 +67,15 @@ fn main() {
 
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
-            get_instances,
             unlock_icons,
             file_exists,
+            minecraft::instances::instances::get_instances,
             launching::launching::launch_instance,
             java::get_java_version,
-            accounts::get_selected_index,
-            accounts::set_selected_index,
-            accounts::remove_account,
-            accounts::get_accounts,
+            configuration::accounts::get_selected_index,
+            configuration::accounts::set_selected_index,
+            configuration::accounts::remove_account,
+            configuration::accounts::get_accounts,
             auth::add_account
         ])
         .run(tauri::generate_context!())
@@ -80,30 +90,6 @@ fn unlock_icons(path: String, app_handle: AppHandle) {
 #[tauri::command()]
 fn file_exists(path: String) -> bool {
     Path::new(&path).exists()
-}
-
-#[tauri::command(async)]
-fn get_instances(path: String, app_handle: AppHandle) {
-    let paths = fs::read_dir(path).unwrap();
-    let mut instance_count: u32 = 0;
-
-    for path in paths {
-        if path.as_ref().unwrap().file_type().unwrap().is_dir() {
-            let instance_folder = path.unwrap();
-
-            let instance_contents = fs::read_dir(instance_folder.path()).unwrap();
-            
-            // TODO: Use much faster checking using path.exists(), and multithreading
-            for file in instance_contents {
-                match file.unwrap().file_name().into_string().unwrap().as_ref() {
-                    "minecraftinstance.json" => {minecraft::instances::handle_instance_cf(instance_folder, app_handle.clone()); instance_count += 1; break;},
-                    "instance.cfg" => {minecraft::instances::handle_instance_mmc(instance_folder, app_handle.clone()); instance_count += 1; break;},
-                    _ => continue
-                }   
-            }
-        }
-    }
-    app_handle.emit_all("instance_finish", instance_count).unwrap();
 }
 
 pub fn notify(app_handle: &AppHandle, name: &str, text: &str, status: NotificationState) {

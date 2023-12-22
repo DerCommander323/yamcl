@@ -4,7 +4,7 @@ use log::debug;
 
 use crate::get_config_dir;
 
-use super::auth_structs::{MCAccount, AccountList, MCProfile};
+use crate::authentication::auth_structs::{MCAccount, AccountList, MCProfile};
 
 
 
@@ -79,8 +79,8 @@ pub fn update_account(account: MCAccount, new_data: MCAccount) {
     for acc in acc_list.accounts.iter_mut() {
         if *acc == account {
             *acc = new_data;
+            break;
         }
-        break;
     }
 
     debug!("Post: {:#?}", acc_list);
