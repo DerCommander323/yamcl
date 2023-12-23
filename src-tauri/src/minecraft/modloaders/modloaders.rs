@@ -38,8 +38,8 @@ impl ModLoaders {
 
     pub async fn get_manifest(&self, mc_ver: &str, loader_ver: &str, client: &Client) -> Option<LoaderManifests> {
         match self {
-            ModLoaders::Forge => ForgeVersionManifest::get(mc_ver, loader_ver, client).await.map(|mf| LoaderManifests::Forge(mf)),
-            ModLoaders::Fabric => FabricVersionManifest::get(mc_ver, loader_ver, client).await.map(|mf| LoaderManifests::Fabric(mf)),
+            ModLoaders::Forge => ForgeVersionManifest::get(mc_ver, loader_ver, client).await.map(LoaderManifests::Forge),
+            ModLoaders::Fabric => FabricVersionManifest::get(mc_ver, loader_ver, client).await.map(LoaderManifests::Fabric),
             _ => None,
         }
     }
@@ -47,14 +47,14 @@ impl ModLoaders {
     pub fn from_uid(mmc_uid: &str) -> Option<Self> {
         MMC_LOADERS.iter().find(|&loader| {
             loader.0 == mmc_uid
-        }).map_or(None, |v| Some(v.1))
+        }).map(|v| v.1)
     }
     
     pub fn from_cf(cf_name: &str) -> Option<Self> {
         if let Some(name) = cf_name.split('-').nth(0) {
             STRING_LOADERS.iter().find(|&loader| {
                 loader.0 == name
-            }).map_or(None, |v| Some(v.1))
+            }).map(|v| v.1)
         } else {
             None
         }

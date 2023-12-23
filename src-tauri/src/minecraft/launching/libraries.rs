@@ -21,7 +21,7 @@ impl MCLibrary {
                 &classifiers.natives_linux // in the hopes of these natives working on platforms like OpenBSD too (probably not)
             };
             if let Some(n) = natives.as_ref() {
-                paths.push(&n);
+                paths.push(n);
             }
         }
         paths
@@ -38,7 +38,7 @@ impl MCLibrary {
         let lib_dir = get_library_dir();
         for download in self.get_downloads() {
             download_file_checked(
-                &client,
+                client,
                 download.sha1.as_ref(),
                 &lib_dir.join(&download.path),
                 &download.url

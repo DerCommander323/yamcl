@@ -68,7 +68,7 @@ impl MCVersionManifest {
         }
 
         if let Some(config) = self.get_log4j_config(client).await {
-            final_args.push(config.0.replace("${path}", &config.1.to_string_lossy().to_string()))
+            final_args.push(config.0.replace("${path}", &config.1.to_string_lossy()))
         }
 
         final_args
@@ -114,14 +114,14 @@ impl MCVersionManifest {
             .collect();
 
         for lib in &libraries {
-            lib.download_checked(&client).await
+            lib.download_checked(client).await
         }
 
         libraries.iter()
             .flat_map(|&lib| lib.get_paths() )
             .map(|path| path.to_string_lossy().to_string() )
             .chain(iter::once(
-                self.get_client_jar(&client).await.to_string_lossy().to_string()
+                self.get_client_jar(client).await.to_string_lossy().to_string()
             ))
             .collect::<Vec<String>>()
             .join(&separator)

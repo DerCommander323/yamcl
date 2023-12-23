@@ -10,10 +10,9 @@ use reqwest::Client;
 use sha1_smol::Sha1;
 use simple_logger::SimpleLogger;
 use tauri::{AppHandle, Manager, api::path::{data_dir, config_dir}};
-use authentication::auth;
-use minecraft::{launching, java};
+use minecraft::{launching, java, authentication::auth};
 
-mod minecraft {
+pub mod minecraft {
     pub mod launching {
         pub mod launching;
         pub mod manifests;
@@ -26,19 +25,19 @@ mod minecraft {
         pub mod forge;
         pub mod forge_installer;
     }
-    pub mod java;
     pub mod instances {
         pub mod instances;
         pub mod errors;
         pub mod curseforge;
         pub mod multimc;
     }
+    pub mod authentication { 
+        pub mod auth;
+        pub mod auth_structs;
+    }
+    pub mod java;
 }
-mod authentication { 
-    pub mod auth;
-    pub mod auth_structs;
-}
-mod configuration {
+pub mod configuration {
     pub mod accounts;
     pub mod settings;
 }
@@ -104,7 +103,7 @@ pub fn notify(app_handle: &AppHandle, name: &str, text: &str, status: Notificati
 /// Checks if the checksum of the file at `path` matches `checksum` and downloads it from `url` if not.
 pub async fn download_file_checked(client: &Client, checksum: Option<&String>, path: &PathBuf, url: &String) {
     if !path.is_file() || if let Some(csum) = checksum {
-        if let Ok(contents) = fs::read(&path) {
+        if let Ok(contents) = fs::read(path) {
             let contents_checksum = Sha1::from(contents).digest().to_string();
             &contents_checksum != csum
         } else { true }
@@ -141,7 +140,7 @@ pub fn maven_identifier_to_path(identifier: &str) -> String {
     let (raw_path, raw_name, raw_version) = (parts[0], parts[1], parts[2]);
 
     let path = raw_path.replace(".", "/");
-    let version_path = raw_version.split(":").nth(0).unwrap_or(raw_version);
+    let version_path = raw_version.split(":").next().unwrap_or(raw_version);
     let version = raw_version.replace(":", "-");
 
     format!("{path}/{raw_name}/{version_path}/{raw_name}-{version}.{extension}")

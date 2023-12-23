@@ -4,7 +4,7 @@ use log::{info, debug, error};
 use reqwest::Client;
 use serde_json::json;
 use tauri::{AppHandle, async_runtime::block_on};
-use crate::{authentication::auth_structs::*, notify, NotificationState, configuration::accounts::{save_new_account, update_account}};
+use crate::{minecraft::authentication::auth_structs::*, notify, NotificationState, configuration::accounts::{save_new_account, update_account}};
 
 
 const MS_CLIENT_ID: &str = "5431ff2d-20f8-415b-aa2f-5218eba055ea"; // The Yet Another MC Launcher client_id. If you fork this project, please make sure to use your own!
@@ -100,34 +100,34 @@ async fn add_account_code(code: &str, app_handle: &AppHandle) {
     let client = Client::new();
 
     info!("Getting Microsoft Auth response...");
-    notify(&app_handle, "login_status", "Getting Microsoft Auth reponse...", NotificationState::Running);
+    notify(app_handle, "login_status", "Getting Microsoft Auth reponse...", NotificationState::Running);
     let msa_response = MSAResponse2::from_code(code, &client).await;
     // trace!("{:#?}", msa_response);
 
     info!("Getting Xbox Live Auth response...");
-    notify(&app_handle, "login_status", "Getting Xbox Live Auth reponse...", NotificationState::Running);
+    notify(app_handle, "login_status", "Getting Xbox Live Auth reponse...", NotificationState::Running);
     let xbl_response = msa_response.get_xbl_reponse(&client).await;
     // trace!("{:#?}", xbl_response);
 
     info!("Getting Xsts Auth response...");
-    notify(&app_handle, "login_status", "Getting Xsts Auth reponse...", NotificationState::Running);
+    notify(app_handle, "login_status", "Getting Xsts Auth reponse...", NotificationState::Running);
     let xsts_response = xbl_response.xbl_to_xsts_response(&client).await;
     // trace!("{:#?}", xsts_response);
 
     info!("Getting Minecraft Auth response...");
-    notify(&app_handle, "login_status", "Getting Minecraft Auth reponse...", NotificationState::Running);
+    notify(app_handle, "login_status", "Getting Minecraft Auth reponse...", NotificationState::Running);
     let mc_response = xsts_response.xsts_to_mc_response(&client).await;
     // trace!("{:#?}", mc_response);
 
     info!("Checking Minecraft ownership...");
-    notify(&app_handle, "login_status", "Checking Minecraft ownership...", NotificationState::Running);
+    notify(app_handle, "login_status", "Checking Minecraft ownership...", NotificationState::Running);
     if !mc_response.has_mc_ownership(&client).await {
         notify(&app_handle, "login_status", "Account does not own Minecraft!", NotificationState::Error);
         return;
     }
 
     info!("Getting Minecraft account...");
-    notify(&app_handle, "login_status", "Getting Minecraft account...", NotificationState::Running);
+    notify(app_handle, "login_status", "Getting Minecraft account...", NotificationState::Running);
     let mc_profile = mc_response.get_mc_profile(&client).await;
     // trace!("{:#?}", mc_profile);
 
@@ -142,12 +142,12 @@ async fn add_account_code(code: &str, app_handle: &AppHandle) {
 
     // trace!("{:#?}", mc_account);
     info!("Saving new Minecraft account...");
-    notify(&app_handle, "login_status", "Saving new account...", NotificationState::Running);
+    notify(app_handle, "login_status", "Saving new account...", NotificationState::Running);
     if let Err(e) = save_new_account(mc_account) {
         error!("Error occured while saving new account: {e}")
     }
 
-    notify(&app_handle, "login_status", &String::from_iter(["Successfully added account \"", &username, "\"!"]), NotificationState::Success);
+    notify(app_handle, "login_status", &String::from_iter(["Successfully added account \"", &username, "\"!"]), NotificationState::Success);
     info!("Successfully added new account.");
 }
 
@@ -326,16 +326,16 @@ impl MCAccount {
                 if self.xbl_response.not_after < now || force {
                     if self.msa_response.expires_at < now || force {
                         info!("Refreshing Microsoft Token...");
-                        self.msa_response.refresh(&client).await;
+                        self.msa_response.refresh(client).await;
                     }
                     info!("Refreshing Xbox Live Token...");
-                    self.xbl_response = self.msa_response.get_xbl_reponse(&client).await;
+                    self.xbl_response = self.msa_response.get_xbl_reponse(client).await;
                 }
                 info!("Refreshing Xsts Token...");
-                self.xsts_response = self.xbl_response.xbl_to_xsts_response(&client).await;
+                self.xsts_response = self.xbl_response.xbl_to_xsts_response(client).await;
             }
             info!("Refreshing Minecraft Token...");
-            self.mc_response = self.xsts_response.xsts_to_mc_response(&client).await;
+            self.mc_response = self.xsts_response.xsts_to_mc_response(client).await;
 
             debug!("Saving updated account details...");
             update_account(previous, self.clone());

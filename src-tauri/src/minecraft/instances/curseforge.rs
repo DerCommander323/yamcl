@@ -1,4 +1,4 @@
-use std::{path::PathBuf, str::FromStr};
+use std::{path::{PathBuf, Path}, str::FromStr};
 
 use log::info;
 use reqwest::Client;
@@ -44,7 +44,7 @@ struct CFProject {
 
 
 impl CFInstance {
-    pub async fn get(instance_path: &PathBuf) -> IResult<Self> {
+    pub async fn get(instance_path: &Path) -> IResult<Self> {
         let path = instance_path.join("minecraftinstance.json");
         let pack_file = fs::read(&path).await.map_err(
             |err| InstanceGatherError::FileReadFailed(path.clone(), err)

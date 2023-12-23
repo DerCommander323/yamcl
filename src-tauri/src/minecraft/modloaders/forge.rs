@@ -44,9 +44,9 @@ pub struct ForgeMappings {
 
 impl ForgeVersionManifest {
     pub async fn get(mc_ver: &str, forge_ver: &str, client: &Client) -> Option<Self> {
-        let path = get_manifest_path(&mc_ver, &forge_ver);
+        let path = get_manifest_path(mc_ver, forge_ver);
         if !path.exists() {
-            ForgeInstaller::extract_needed(&mc_ver, &forge_ver, &client).await
+            ForgeInstaller::extract_needed(mc_ver, forge_ver, client).await
         }
 
         let manifest = fs::read_to_string(path).expect("Failed to read manifest file!?");
@@ -57,9 +57,9 @@ impl ForgeVersionManifest {
 
 impl ForgeInstallProfile {
     pub async fn get(mc_ver: &str, forge_ver: &str, client: &Client) -> Option<Self> {
-        let path = get_install_profile_path(&mc_ver, &forge_ver);
+        let path = get_install_profile_path(mc_ver, forge_ver);
         if !path.exists() {
-            ForgeInstaller::extract_needed(&mc_ver, &forge_ver, &client).await
+            ForgeInstaller::extract_needed(mc_ver, forge_ver, client).await
         }
 
         let install_profile = fs::read_to_string(path).expect("Failed to read install profile file!?");
@@ -68,7 +68,7 @@ impl ForgeInstallProfile {
 
     pub fn process(&self, side: Side, java_path: &str) {
         for proc in &self.processors {
-            proc.run(&side, &self, java_path);
+            proc.run(&side, self, java_path);
         }
     }
 

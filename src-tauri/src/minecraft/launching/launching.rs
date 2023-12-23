@@ -4,7 +4,7 @@ use log::{*};
 use reqwest::Client;
 use tauri::AppHandle;
 
-use crate::{minecraft::{launching::mc_structs::MCVersionManifest, instances::instances::SimpleInstance, java::JavaDetails}, authentication::auth_structs::MCAccount, notify, NotificationState, get_library_dir, get_classpath_separator, configuration::accounts::get_active_account};
+use crate::{minecraft::{launching::mc_structs::MCVersionManifest, instances::instances::SimpleInstance, java::JavaDetails, authentication::auth_structs::MCAccount}, notify, NotificationState, get_library_dir, get_classpath_separator, configuration::accounts::get_active_account};
 
 use super::mc_structs::MCVersionDetails;
 
@@ -37,7 +37,7 @@ pub async fn launch_instance(
     .arg(args.main_class)
     .args(args.game)
     .spawn()
-    .or_else(|err| Err(format!("Failed to run Minecraft command: {}", err.to_string())))?;
+    .map_err(|err| format!("Failed to run Minecraft command: {err}"))?;
 
     notify(&app_handle, &format!("{}_status", id), "Instance launched successfully!", NotificationState::Success);
 
@@ -132,7 +132,7 @@ async fn parse_arguments(args_struct: Args, account: MCAccount, version: MCVersi
         ("${library_directory}", get_library_dir().to_string_lossy().to_string())
     ];
 
-    let to_remove = vec![
+    let to_remove = [
         "quickPlay",
         "--demo"
     ];

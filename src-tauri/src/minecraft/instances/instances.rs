@@ -14,7 +14,7 @@ use super::{errors::InstanceGatherError, multimc::{MMCPack, MMCConfig, MMCMetada
 // Instance Gather Result
 pub type IResult<T> = core::result::Result<T, InstanceGatherError>;
 
-pub const META_FILENAME: &'static str = "yamcl-data.json";
+pub const META_FILENAME: &str = "yamcl-data.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimpleInstance {
@@ -102,12 +102,10 @@ pub async fn get_instances(app_handle: AppHandle) -> IResult<Vec<SimpleInstance>
             } else {
                 Ordering::Less
             }
+        } else if b.last_played.is_some() {
+            Ordering::Greater
         } else {
-            if b.last_played.is_some() {
-                Ordering::Greater
-            } else {
-                Ordering::Equal
-            }
+            Ordering::Equal
         }
     );
 

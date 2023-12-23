@@ -42,7 +42,7 @@ impl ForgeInstaller {
     /// ### Downloads the Forge installer and extracts the manifest and the install_profile from it
     /// Target location: `forge-{mc_ver}-{forge_ver}-[installer.jar/manifest.json/install_profile.json]` in the forge cache dir
     pub async fn extract_needed(mc_ver: &str, forge_ver: &str, client: &Client) {
-        let installer = Self::download(&mc_ver, &forge_ver, client).await;
+        let installer = Self::download(mc_ver, forge_ver, client).await;
 
         debug!("Extracting installer jar...");
         let jar = jars::jar(

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use serde::{Serialize, Deserialize};
 use tokio::fs;
@@ -17,13 +17,13 @@ pub struct MMCConfig {
 }
 
 impl MMCConfig {
-    pub async fn get(path: &PathBuf) -> IResult<Self> {
+    pub async fn get(path: &Path) -> IResult<Self> {
         let instance_file = fs::read_to_string(path.join("instance.cfg")).await.map_err(
-            |err| InstanceGatherError::FileReadFailed(path.clone(), err)
+            |err| InstanceGatherError::FileReadFailed(path.to_path_buf(), err)
         )?.replace("[General]", ""); // Remove the section if there is one
 
         serde_ini::from_str(&instance_file).map_err(
-            |err| InstanceGatherError::ParseFailedIni(InstanceType::MultiMC, path.clone(), err)
+            |err| InstanceGatherError::ParseFailedIni(InstanceType::MultiMC, path.to_path_buf(), err)
         )
     }
 
@@ -64,7 +64,7 @@ pub struct MMCPackComponent {
 }
 
 impl MMCPack {
-    pub async fn get(instance_path: &PathBuf) -> IResult<Self> {
+    pub async fn get(instance_path: &Path) -> IResult<Self> {
         let path = instance_path.join("mmc-pack.json");
         let pack_file = fs::read(&path).await.map_err(
             |err| InstanceGatherError::FileReadFailed(path.clone(), err)
@@ -83,9 +83,9 @@ pub struct MMCMetadata {
 }
 
 impl MMCMetadata {
-    pub async fn get(instance_path: &PathBuf) -> IResult<Self> {
+    pub async fn get(instance_path: &Path) -> IResult<Self> {
         let file = fs::read(instance_path.join(META_FILENAME)).await.map_err(
-            |err| InstanceGatherError::FileReadFailed(instance_path.clone(), err)
+            |err| InstanceGatherError::FileReadFailed(instance_path.to_path_buf(), err)
         )?;
 
         match serde_json::from_slice(&file) {
@@ -94,7 +94,7 @@ impl MMCMetadata {
         }
     }
 
-    async fn generate(instance_path: &PathBuf) -> IResult<Self> {
+    async fn generate(instance_path: &Path) -> IResult<Self> {
         let path = instance_path.join(META_FILENAME);
 
         let meta = MMCMetadata {
