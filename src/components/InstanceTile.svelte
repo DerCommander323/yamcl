@@ -16,7 +16,6 @@
     const launch = () => {
         launchInstance(instance)
     }
-
     
     const onError = (/** @type {any} */ e) => {
         errorCount++

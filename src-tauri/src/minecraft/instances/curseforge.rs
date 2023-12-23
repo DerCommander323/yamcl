@@ -7,7 +7,7 @@ use tokio::fs;
 
 use crate::{configuration::settings::AppSettings, download_file_checked};
 
-use super::{errors::InstanceGatherError, instances::{IResult, META_FILENAME}};
+use super::{errors::InstanceGatherError, instances::{IResult, META_FILENAME, InstanceType}};
 
 
 // Handling the "minecraftinstance.json" file
@@ -51,7 +51,7 @@ impl CFInstance {
         )?;
 
         serde_json::from_slice(&pack_file).map_err(
-            |err| InstanceGatherError::ParseFailed(path, err)
+            |err| InstanceGatherError::ParseFailedJson(InstanceType::CurseForge, path, err)
         )
     }
 

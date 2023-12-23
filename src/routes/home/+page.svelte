@@ -30,7 +30,7 @@
 
     //Main Code goes in here
     onMount(async () => {
-        await getSetting('instanceSize').then(v => {
+        await getSetting('instance_size').then(v => {
             if(v) instanceSize = v
             adjustSize()
         }).catch(console.warn)
@@ -47,7 +47,7 @@
             e.style.gridTemplateColumns = `repeat(${Math.ceil((width*(30-instanceSize))/2500)}, minmax(0, 1fr))`
             e.style.opacity = "100"
         }
-        changeSetting('instanceSize', instanceSize)
+        changeSetting('instance_size', instanceSize)
     }
 
     //Adjust CSS Grid Columns on resize

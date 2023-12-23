@@ -76,6 +76,8 @@ fn main() {
             configuration::accounts::set_selected_index,
             configuration::accounts::remove_account,
             configuration::accounts::get_accounts,
+            configuration::settings::get_settings,
+            configuration::settings::update_settings,
             auth::add_account
         ])
         .run(tauri::generate_context!())

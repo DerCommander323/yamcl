@@ -1,8 +1,7 @@
 import { invoke } from "@tauri-apps/api";
 import { open, confirm } from "@tauri-apps/api/dialog";
 import { writable } from "svelte/store";
-// @ts-ignore
-import { getMinecraftVersions, minecraftVersionList } from "./versions";
+import { getMinecraftVersions } from "./versions";
 import { changeSetting, getSetting } from "./settings";
 import { createNotification, finishNotification } from "./notificationSystem";
 
@@ -19,20 +18,20 @@ export const javaStore = writable([])
 let javaSettings = []
 
 export async function getJavaSettings() {
-    javaSettings = await getSetting('javaSettings') ?? []
+    javaSettings = await getSetting('java_settings') ?? []
     javaStore.set(javaSettings)
 }
 
 export function saveJavaSettings() {
     /**
-   * @type {{ path: String, label: String, version: String, mcVersions: {min: MCVersion, max: MCVersion}, xmx: Number, xms: Number, args: String, }[]}
+   * @type {{ path: String, label: String, version: String, minecraft_versions: {min: MCVersion, max: MCVersion}, xmx: Number, xms: Number, args: String }[]}
    */
     let _savedJavaSettings = []
     javaSettings.forEach(e => {
-        const { path, label, version, mcVersions, args, xmx, xms } = e
-        _savedJavaSettings.push({ path, label, version, mcVersions, args, xmx, xms })
+        const { path, label, version, minecraft_versions, args, xmx, xms } = e
+        _savedJavaSettings.push({ path, label, version, minecraft_versions, args, xmx, xms })
     })
-    changeSetting('javaSettings', _savedJavaSettings)
+    changeSetting('java_settings', _savedJavaSettings)
 }
 
 export function addJavaSetting() {
@@ -65,8 +64,8 @@ export async function deleteJavaSetting(index) {
  */
 export function updateJavaMcVersions(index, minmax, value) {
     // @ts-ignore
-    if(!javaSettings[index].mcVersions) javaSettings[index].mcVersions = {min: {}, max: {}}
-    javaSettings[index].mcVersions[minmax] = value
+    if(!javaSettings[index].minecraft_versions) javaSettings[index].minecraft_versions = {min: {}, max: {}}
+    javaSettings[index].minecraft_versions[minmax] = value
     javaStore.set(javaSettings)
     saveJavaSettings()
 }
@@ -122,15 +121,14 @@ export async function getJavaVersion(path, args) {
  * @returns {Promise<JavaDetails>} The Java version to use for mc_ver
  */
 export async function getJavaForVersion(mcVer) {
-
     await getJavaSettings()
     let mcVersions = await getMinecraftVersions()
     let releaseTime = new Date(mcVersions.versions.find(v => v.id == mcVer)?.releaseTime ?? 0).getTime()
     if(releaseTime === 0) return Promise.reject("Invalid Minecraft Version!")
     
     let java = javaSettings.find((java) => {
-        let maxTime = new Date(java.mcVersions.max.releaseTime).getTime()
-        let minTime = new Date(java.mcVersions.min.releaseTime).getTime()
+        let maxTime = new Date(java.minecraft_versions.max.releaseTime).getTime()
+        let minTime = new Date(java.minecraft_versions.min.releaseTime).getTime()
 
         return maxTime >= releaseTime && minTime <= releaseTime
     })

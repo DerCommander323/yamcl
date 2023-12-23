@@ -61,15 +61,15 @@
                                 <p class="p-1"> Minecraft Version List: </p>
                                 <MinecraftList
                                     text="From..."
-                                    selected={java.mcVersions?.min} 
-                                    dateFilter={(v)=>(java.mcVersions?.max.releaseTime ? new Date(v.releaseTime) < new Date(java.mcVersions?.max.releaseTime) : true)}
+                                    selected={java.minecraft_versions?.min} 
+                                    dateFilter={(v)=>(java.minecraft_versions?.max.releaseTime ? new Date(v.releaseTime) < new Date(java.minecraft_versions?.max.releaseTime) : true)}
                                     on:clicked={(e)=>{updateJavaMcVersions(index, 'min', e.detail.ver)}}
                                 />
                                 <p class="p-1"> - </p>
                                 <MinecraftList
                                     text="To..."
-                                    selected={java.mcVersions?.max} 
-                                    dateFilter={(v)=>(new Date(v.releaseTime) > new Date(java.mcVersions?.min.releaseTime ?? 0))}
+                                    selected={java.minecraft_versions?.max} 
+                                    dateFilter={(v)=>(new Date(v.releaseTime) > new Date(java.minecraft_versions?.min.releaseTime ?? 0))}
                                     on:clicked={(e)=>{updateJavaMcVersions(index, 'max', e.detail.ver)}}
                                 />
                             </div>
@@ -119,8 +119,8 @@
         // idk where to use this yet :) console.error("You like crashing, dont you? \n⠀⢸⠂⠀⠀⠀⠘⣧⠀⠀⣟⠛⠲⢤⡀⠀⠀⣰⠏⠀⠀⠀⠀⠀⢹⡀\n⠀⡿⠀⠀⠀⠀⠀⠈⢷⡀⢻⡀⠀⠀⠙⢦⣰⠏⠀⠀⠀⠀⠀⠀⢸⠀\n⠀⡇⠀⠀⠀⠀⠀⠀⢀⣻⠞⠛⠀⠀⠀⠀⠻⠀⠀⠀⠀⠀⠀⠀⢸⠀\n⠀⡇⠀⠀⠀⠀⠀⠀⠛⠓⠒⠓⠓⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⠀\n⠀⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⠀\n⠀⢿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⣀⣀⠀⠀⢀⡟⠀\n⠀⠘⣇⠀⠘⣿⠋⢹⠛⣿⡇⠀⠀⠀⠀⣿⣿⡇⠀⢳⠉⠀⣠⡾⠁⠀\n⣦⣤⣽⣆⢀⡇⠀⢸⡇⣾⡇⠀⠀⠀⠀⣿⣿⡷⠀⢸⡇⠐⠛⠛⣿⠀\n⠹⣦⠀⠀⠸⡇⠀⠸⣿⡿⠁⢀⡀⠀⠀⠿⠿⠃⠀⢸⠇⠀⢀⡾⠁⠀\n⠀⠈⡿⢠⢶⣡⡄⠀⠀⠀⠀⠉⠁⠀⠀⠀⠀⠀⣴⣧⠆⠀⢻⡄⠀⠀\n⠀⢸⠃⠀⠘⠉⠀⠀⠀⠠⣄⡴⠲⠶⠴⠃⠀⠀⠀⠉⡀⠀⠀⢻⡄⠀\n⠀⠘⠒⠒⠻⢦⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣤⠞⠛⠒⠛⠋⠁⠀\n⠀⠀⠀⠀⠀⠀⠸⣟⠓⠒⠂⠀⠀⠀⠀⠀⠈⢷⡀⠀⠀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠙⣦⠀⠀⠀⠀⠀⠀⠀⠀⠈⢷⠀⠀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⣼⣃⡀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣆⠀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠉⣹⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⠀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡆⠀⠀⠀⠀⠀\n")
 
         // @ts-ignore
-        instancePath = await getSetting('instancePath')?? 'Click to set!'
-        iconPath = await getSetting('iconPath')?? 'Click to set!'
+        instancePath = await getSetting('instance_path')?? 'Click to set!'
+        iconPath = await getSetting('icon_path')?? 'Click to set!'
 
         mcVersions = await getMinecraftVersions()
 
@@ -139,7 +139,7 @@
         let dir = await pickDir()
 
         if(dir==null) return
-        changeSetting('instancePath', dir)
+        changeSetting('instance_path', dir)
         instancePath = dir
     }
 
@@ -151,7 +151,7 @@
         let dir = await pickDir()
 
         if(dir==null) return
-        changeSetting('iconPath', dir)
+        changeSetting('icon_path', dir)
         iconPath = dir
     }
 

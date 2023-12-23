@@ -2,9 +2,7 @@ use std::{io::Error, fs::{self, create_dir_all}, path::PathBuf};
 
 use log::debug;
 
-use crate::get_config_dir;
-
-use crate::authentication::auth_structs::{MCAccount, AccountList, MCProfile};
+use crate::{get_config_dir, authentication::auth_structs::{MCAccount, AccountList, MCProfile}};
 
 
 

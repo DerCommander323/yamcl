@@ -1,4 +1,16 @@
 /**
+ * AppSettings Struct
+ * @typedef {{
+ *  instance_size: Number,
+ *  instance_path: String | null,
+ *  icon_path: String | null,
+ *  java_settings: JavaDetails[]
+ * }} AppSettings
+*/
+
+
+
+/**
  * InstanceType Enum
  * @typedef { "MultiMC" | "CurseForge" } MCInstanceType
 */
@@ -39,7 +51,7 @@
  *  path: String,
  *  label: String,
  *  version: String,
- *  mcVersions: {
+ *  minecraft_versions: {
  *      min: MCVersion,
  *      max: MCVersion
  *  },

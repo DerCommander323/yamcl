@@ -3,14 +3,23 @@ use std::process::Command;
 use log::{*};
 use serde::{Deserialize, Serialize};
 
+use super::launching::mc_structs::MCVersionDetails;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JavaDetails {
     pub path: String,
     pub label: String,
     pub version: String,
+    pub minecraft_versions: JavaMCRange,
     pub xmx: u32,
     pub xms: u32,
     pub args: String
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct JavaMCRange {
+    min: MCVersionDetails,
+    max: MCVersionDetails
 }
 
 #[tauri::command(async)]

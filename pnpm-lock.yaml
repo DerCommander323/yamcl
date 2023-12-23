@@ -14,9 +14,6 @@ dependencies:
   svelte-icons:
     specifier: ^2.1.0
     version: 2.1.0
-  yaml:
-    specifier: ^2.3.1
-    version: 2.3.1
 
 devDependencies:
   '@sveltejs/adapter-auto':
@@ -1508,3 +1505,4 @@ packages:
   /yaml@2.3.1:
     resolution: {integrity: sha512-2eHWfjaoXgTBC2jNM1LRef62VQa0umtvRiDSk6HSzW7RvS5YtkabJrwYLLEKWBc8a5U2PTSCs+dJjUTJdlHsWQ==}
     engines: {node: '>= 14'}
+    dev: true

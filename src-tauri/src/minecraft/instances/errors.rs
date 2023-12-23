@@ -8,6 +8,7 @@ use super::instances::InstanceType;
 
 
 #[derive(Debug, Error)]
+#[allow(unused)]
 pub enum InstanceGatherError {
     #[error("Unknown error occured")]
     Unknown,

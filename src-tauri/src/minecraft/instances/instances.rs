@@ -1,4 +1,4 @@
-use std::{path::PathBuf, cmp::Ordering, ops::Div};
+use std::{path::PathBuf, cmp::Ordering};
 
 use tauri::{AppHandle, Manager};
 use tokio::{fs, task::JoinSet, time::Instant};
@@ -79,7 +79,6 @@ pub async fn get_instances(app_handle: AppHandle) -> IResult<Vec<SimpleInstance>
             });
         }
     }
-    
 
     while let Some(Ok(opt)) = tasks.join_next().await {
         if let Some(result) = opt {
