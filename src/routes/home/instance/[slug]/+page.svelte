@@ -28,6 +28,9 @@
     }
 
     function openFolder() {
-        if(currentInstance) shell.open(currentInstance.path)
+    if (currentInstance && currentInstance.path) {
+        const folderPath = currentInstance.path.replace(/\\/g, '/'); // Replace backslashes with forward slashes
+        shell.open(folderPath);
     }
+}
 </script>

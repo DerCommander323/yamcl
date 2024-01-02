@@ -60,4 +60,3 @@ export async function launchInstance(instance) {
         console.error(e)
     })
 }
-

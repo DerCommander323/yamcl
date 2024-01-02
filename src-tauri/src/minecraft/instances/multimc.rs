@@ -4,6 +4,7 @@ use serde::{Serialize, Deserialize};
 use tokio::fs;
 
 use super::{errors::InstanceGatherError, instances::{IResult, InstanceType, META_FILENAME}};
+use log::error;
 
 
 // Handling the "instance.cfg" file
@@ -11,20 +12,29 @@ use super::{errors::InstanceGatherError, instances::{IResult, InstanceType, META
 #[serde(rename_all = "camelCase")]
 pub struct MMCConfig {
     pub name: String,
+    #[serde(default)] // Make iconKey optional or provide a default value
+    pub icon_key: String,
     #[serde(rename = "lastLaunchTime")]
     pub last_played: Option<i64>,
-    pub icon_key: String
 }
 
 impl MMCConfig {
     pub async fn get(path: &Path) -> IResult<Self> {
-        let instance_file = fs::read_to_string(path.join("instance.cfg")).await.map_err(
-            |err| InstanceGatherError::FileReadFailed(path.to_path_buf(), err)
-        )?.replace("[General]", ""); // Remove the section if there is one
+        let instance_file = fs::read_to_string(path.join("instance.cfg"))
+            .await
+            .map_err(|err| {
+                error!("Failed to read instance.cfg file: {:?}", err);
+                InstanceGatherError::FileReadFailed(path.to_path_buf(), err)
+            })?
+            .replace("[General]", ""); // Remove the section if there is one
 
-        serde_ini::from_str(&instance_file).map_err(
-            |err| InstanceGatherError::ParseFailedIni(InstanceType::MultiMC, path.to_path_buf(), err)
-        )
+        serde_ini::from_str(&instance_file).map_err(|err| {
+            error!(
+                "Failed to parse instance.cfg file at {:?}: {:?}",
+                path, err
+            );
+            InstanceGatherError::ParseFailedIni(InstanceType::MultiMC, path.to_path_buf(), err)
+        })
     }
 
     pub fn check_icon(icon_key: &str) -> Option<String> {
@@ -65,14 +75,21 @@ pub struct MMCPackComponent {
 
 impl MMCPack {
     pub async fn get(instance_path: &Path) -> IResult<Self> {
-        let path = instance_path.join("mmc-pack.json");
-        let pack_file = fs::read(&path).await.map_err(
-            |err| InstanceGatherError::FileReadFailed(path.clone(), err)
-        )?;
+    let path = instance_path.join("mmc-pack.json");
+    let pack_file = fs::read(&path)
+        .await
+        .map_err(|err| {
+            error!("Failed to read mmc-pack.json file: {:?}", err);
+            InstanceGatherError::FileReadFailed(path.clone(), err)
+        })?;
 
-        serde_json::from_slice(&pack_file).map_err(
-            |err| InstanceGatherError::ParseFailed(path, err)
-        )
+    serde_json::from_slice(&pack_file).map_err(|err| {
+        error!(
+            "Failed to parse mmc-pack.json file at {:?}: {:?}",
+            path, err
+        );
+        InstanceGatherError::ParseFailed(path, err)
+    })
     }
 }
 
@@ -84,27 +101,48 @@ pub struct MMCMetadata {
 
 impl MMCMetadata {
     pub async fn get(instance_path: &Path) -> IResult<Self> {
-        let file = fs::read(instance_path.join(META_FILENAME)).await.map_err(
-            |err| InstanceGatherError::FileReadFailed(instance_path.to_path_buf(), err)
-        )?;
+        let file_path = instance_path.join(META_FILENAME);
 
-        match serde_json::from_slice(&file) {
-            Ok(parsed) => Ok(parsed),
-            Err(_) => Ok(Self::generate(instance_path).await?),
+        // Check if the file exists before reading it
+        if file_path.exists() {
+            // File exists, attempt to read it
+            let file_content = fs::read(&file_path)
+                .await
+                .map_err(|err| {
+                    error!("Failed to read yamcl-data.json file: {:?}", err);
+                    InstanceGatherError::FileReadFailed(instance_path.to_path_buf(), err)
+                })?;
+
+            // Deserialize the file content into MMCMetadata
+            match serde_json::from_slice(&file_content) {
+                Ok(parsed) => Ok(parsed),
+                Err(_) => {
+                    error!("Failed to parse yamcl-data.json file at {:?}", instance_path);
+                    Ok(Self::generate(&file_path).await?)
+                }
+            }
+        } else {
+            // File doesn't exist, generate it
+            Self::generate(&file_path).await
         }
     }
 
-    async fn generate(instance_path: &Path) -> IResult<Self> {
-        let path = instance_path.join(META_FILENAME);
-
+    async fn generate(file_path: &Path) -> IResult<Self> {
         let meta = MMCMetadata {
             instance_id: fastrand::u32(..),
         };
 
-        fs::write(&path, serde_json::to_string_pretty(&meta).unwrap()).await.map_err(
-            |err| InstanceGatherError::FileWriteFailed(path, err)
-        )?;
+        // Serialize the metadata and write it to the file
+        let serialized = serde_json::to_string_pretty(&meta).map_err(|err| {
+            error!("Failed to serialize metadata: {:?}", err);
+            InstanceGatherError::SerializationFailed(err)
+        })?;
+
+        fs::write(file_path, serialized)
+            .await
+            .map_err(|err| InstanceGatherError::FileWriteFailed(file_path.to_path_buf(), err))?;
 
         Ok(meta)
     }
+
 }

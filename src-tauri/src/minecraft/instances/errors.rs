@@ -40,6 +40,8 @@ pub enum InstanceGatherError {
     #[error("Minecraft version could not be found in mmc-pack.json of {0}")]
     MinecraftNotFound(PathBuf),
 
+    #[error("Failed to serialize metadata: {0}")]
+    SerializationFailed(#[from] serde_json::Error),
 
 }
 

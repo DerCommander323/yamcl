@@ -48,37 +48,49 @@ pub async fn get_instances(app_handle: AppHandle) -> IResult<Vec<SimpleInstance>
     let time_start = Instant::now();
 
     let settings = AppSettings::get();
-    let dir = settings.instance_path.ok_or(InstanceGatherError::PathUnset)?;
+    let dir = settings.instance_path.ok_or_else(|| {
+        error!("Path is unset");
+        InstanceGatherError::PathUnset
+    })?;
     if let Some(icon_path) = &settings.icon_path {
         app_handle.asset_protocol_scope().allow_directory(icon_path, false).map_err(
             |err| InstanceGatherError::PathUnlockFailed(icon_path.to_string(), err)
         )?;
     }
     
-    let mut paths = fs::read_dir(&dir).await.or(Err(InstanceGatherError::DirectoryReadFailed(dir)))?;
+    let mut paths = fs::read_dir(&dir).await.or_else(|_| {
+        error!("Failed to read directory: {}", dir);
+        Err(InstanceGatherError::DirectoryReadFailed(dir))
+    })?;
 
     let mut instances = Vec::new();
 
     let mut tasks = JoinSet::new();
 
     while let Ok(Some(path)) = paths.next_entry().await {
-        if path.file_type().await.map_err(
-            |err| InstanceGatherError::FileTypeFailed(path.path(), err)
-        )?.is_dir() {
-            tasks.spawn(async move {
-                let p = &path.path();
+        let p = path.path().clone(); // Clone the PathBuf here
+        let folder_name = p.file_name().unwrap().to_string_lossy();
+        let file_name = p.file_name().unwrap().to_string_lossy();
 
-                if p.join("minecraftinstance.json").is_file() {
-                    Some(SimpleInstance::get_from_cf(&path.path()).await)
-                } else if p.join("instance.cfg").is_file() {
-                    Some(SimpleInstance::get_from_mmc(&path.path()).await)
-                } else {
-                    info!("The folder at {p:?} does not contain a recognized minecraft instance!");
-                    None
-                }
-            });
+        if folder_name == ".LAUNCHER_TEMP" || file_name == "instgroups.json" {
+            continue;
         }
-    }
+        debug!("Processing folder: {:?}", p);
+
+        tasks.spawn(async move {
+        if p.join("minecraftinstance.json").is_file() {
+            debug!("Found minecraftinstance.json in folder: {:?}", p);
+            Some(SimpleInstance::get_from_cf(&path.path()).await)
+        } else if p.join("instance.cfg").is_file() {
+            debug!("Found instance.cfg in folder: {:?}", p);
+            Some(SimpleInstance::get_from_mmc(&path.path()).await)
+        } else {
+            error!("Failed to recognize the folder at {:?}.", p); 
+            None
+        }
+    });
+
+}
 
     while let Some(Ok(opt)) = tasks.join_next().await {
         if let Some(result) = opt {
@@ -119,10 +131,15 @@ impl SimpleInstance {
         let meta = MMCMetadata::get(path).await?;
         let instance_cfg = MMCConfig::get(path).await?;
         let pack_json = MMCPack::get(path).await?;
+        let icon_path = if instance_cfg.icon_key.is_empty() {
+            String::from("default")  // Set a default icon path here
+        } else {
+            instance_cfg.icon_key
+        };
 
         Ok(SimpleInstance {
             name: instance_cfg.name,
-            icon_path: instance_cfg.icon_key,
+            icon_path,
             minecraft_path: if path.join(".minecraft").exists() {
                 path.join(".minecraft")
             } else {
