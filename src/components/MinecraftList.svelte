@@ -1,7 +1,7 @@
 <div class="relative inline-block">
     <button on:click={() => { expanded = !expanded }} class="bg-[#222] p-1 flex flex-row { expanded ? "rounded-b-md " : "rounded-md" }" >
         <p class="w-7 duration-200 { expanded ? "-rotate-90" : ""}"> <IconArrow /> </p>
-        <p class="hover:underline { expanded ? "underline" : "" }"> { selected.id ?? text } </p>
+        <p class="hover:underline { expanded ? "underline" : "" }"> { selected?.id ?? text } </p>
     </button>
     <div class="absolute bottom-full { expanded ? "border" : "" } border-[var(--bg-tertiary)] bg-[var(--bg-secondary)] hover:border-purple-700 w-full min-w-[6.9rem]">
         {#if expanded}
@@ -35,18 +35,17 @@
 
     export let dateFilter = (/** @type {typeof minecraftVersionList.versions[0]} */ _) => true
     /**
-     * @type {typeof minecraftVersionList.versions[0]}
+     * @type {MCVersion | null}
      */
-    // @ts-ignore
-    export let selected = {}
+    export let selected = null
     export let text = 'Click to select!'
 
     /**
-     * @type {typeof minecraftVersionList}
+     * @type {MCVersionList}
      */
     let mcVersions
     /**
-     * @type {typeof minecraftVersionList.versions}
+     * @type {MCVersion[]}
      */
     let filteredVersions = []
     let filters = {

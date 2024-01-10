@@ -4,7 +4,7 @@ use log::{*};
 use reqwest::Client;
 use tauri::AppHandle;
 
-use crate::{minecraft::{launching::mc_structs::MCVersionManifest, instances::instances::SimpleInstance, java::JavaDetails, authentication::auth_structs::MCAccount}, notify, NotificationState, get_library_dir, get_classpath_separator, configuration::accounts::get_active_account};
+use crate::{minecraft::{launching::mc_structs::MCVersionManifest, instances::instances::SimpleInstance, java::JavaDetails, authentication::auth_structs::MCAccount}, NotificationState, get_library_dir, get_classpath_separator, configuration::accounts::get_active_account, Notifier};
 
 use super::mc_structs::MCVersionDetails;
 
@@ -16,12 +16,9 @@ struct Args {
 }
 
 #[tauri::command(async)]
-pub async fn launch_instance(
-    instance: SimpleInstance,
-    java: JavaDetails,
-    app_handle: AppHandle
-) -> Result<(), String> {
-    let SimpleInstance { minecraft_path, name: _, icon_path: _, id, mc_version, modloader: _, last_played: _, instance_type: _, instance_path: _ } = instance.clone();
+pub async fn launch_instance(instance: SimpleInstance, java: JavaDetails, app_handle: AppHandle) -> Result<(), String> {
+    let SimpleInstance { minecraft_path, id, mc_version, .. } = instance.clone();
+    let notifier = Notifier::new(&format!("{id}_status"), app_handle);
     info!("Launching: {minecraft_path:?}, Version: {mc_version}, id: {id}");
 
     let args = get_arguments(&instance, &java).await?;
@@ -39,17 +36,17 @@ pub async fn launch_instance(
     .spawn()
     .map_err(|err| format!("Failed to run Minecraft command: {err}"))?;
 
-    notify(&app_handle, &format!("{}_status", id), "Instance launched successfully!", NotificationState::Success);
+    notifier.notify("Instance launched successfully!", NotificationState::Success);
 
     let exit_status = process.wait().expect("Failed to wait on Java process! How did this happen?");
     info!("Exited with status: {}", exit_status);
 
     if exit_status.success() {
         info!("{minecraft_path:?} exited successfully.");
-        notify(&app_handle, &format!("{}_status", id), "Instance exited successfully.", NotificationState::Success);
+        notifier.notify("Instance exited successfully.", NotificationState::Success);
     } else {
         warn!("{minecraft_path:?} exited (crashed) with status {}", exit_status);
-        notify(&app_handle, &format!("{}_status", id), &format!("Instance crashed with code {}", exit_status.code().unwrap_or(323)), NotificationState::Error);
+        notifier.notify(&format!("Instance crashed with code {}", exit_status.code().unwrap_or(323)), NotificationState::Error);
     }
 
     Ok(())

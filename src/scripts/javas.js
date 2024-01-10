@@ -24,7 +24,7 @@ export async function getJavaSettings() {
 
 export function saveJavaSettings() {
     /**
-   * @type {{ path: String, label: String, version: String, minecraft_versions: {min: MCVersion, max: MCVersion}, xmx: Number, xms: Number, args: String }[]}
+   * @type {{ path: String, label: String, version: String, minecraft_versions: {min: MCVersion | null, max: MCVersion | null}, xmx: Number, xms: Number, args: String }[]}
    */
     let _savedJavaSettings = []
     javaSettings.forEach(e => {
@@ -63,8 +63,7 @@ export async function deleteJavaSetting(index) {
  * @param {any} value The new value for the Property
  */
 export function updateJavaMcVersions(index, minmax, value) {
-    // @ts-ignore
-    if(!javaSettings[index].minecraft_versions) javaSettings[index].minecraft_versions = {min: {}, max: {}}
+    if(!javaSettings[index].minecraft_versions) javaSettings[index].minecraft_versions = {min: null, max: null}
     javaSettings[index].minecraft_versions[minmax] = value
     javaStore.set(javaSettings)
     saveJavaSettings()
@@ -127,6 +126,7 @@ export async function getJavaForVersion(mcVer) {
     if(releaseTime === 0) return Promise.reject("Invalid Minecraft Version!")
     
     let java = javaSettings.find((java) => {
+        if (!java.minecraft_versions.max || !java.minecraft_versions.min) return
         let maxTime = new Date(java.minecraft_versions.max.releaseTime).getTime()
         let minTime = new Date(java.minecraft_versions.min.releaseTime).getTime()
 

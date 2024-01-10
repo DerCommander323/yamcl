@@ -67,10 +67,13 @@ pub async fn get_instances(app_handle: AppHandle) -> IResult<Vec<SimpleInstance>
         )?.is_dir() {
             tasks.spawn(async move {
                 let p = &path.path();
+                trace!("Scanning folder {p:?}");
 
                 if p.join("minecraftinstance.json").is_file() {
+                    trace!("Found minecraftinstance.json in {p:?}");
                     Some(SimpleInstance::get_from_cf(&path.path()).await)
                 } else if p.join("instance.cfg").is_file() {
+                    trace!("Found instance.cfg in {p:?}");
                     Some(SimpleInstance::get_from_mmc(&path.path()).await)
                 } else {
                     info!("The folder at {p:?} does not contain a recognized minecraft instance!");
@@ -122,7 +125,7 @@ impl SimpleInstance {
 
         Ok(SimpleInstance {
             name: instance_cfg.name,
-            icon_path: instance_cfg.icon_key,
+            icon_path: instance_cfg.icon_key.unwrap_or("default".into()),
             minecraft_path: if path.join(".minecraft").exists() {
                 path.join(".minecraft")
             } else {
@@ -143,7 +146,10 @@ impl SimpleInstance {
                 });
                 if let Some(loader) = loader {
                     ModLoader { 
-                        name: loader.cached_name.to_string(),
+                        name: loader.cached_name.as_ref().map_or_else(
+                            || ModLoaders::from_uid(&loader.uid).unwrap_or(ModLoaders::Vanilla).to_string(), 
+                            |name| name.to_string()
+                        ),
                         typ: ModLoaders::from_uid(&loader.uid).unwrap_or(ModLoaders::Vanilla),
                         version: loader.version.clone().unwrap_or("Unknown Version!".to_string())
                     }

@@ -62,14 +62,14 @@
                                 <MinecraftList
                                     text="From..."
                                     selected={java.minecraft_versions?.min} 
-                                    dateFilter={(v)=>(java.minecraft_versions?.max.releaseTime ? new Date(v.releaseTime) < new Date(java.minecraft_versions?.max.releaseTime) : true)}
+                                    dateFilter={(v)=>(java.minecraft_versions?.max?.releaseTime ? new Date(v.releaseTime) < new Date(java.minecraft_versions?.max.releaseTime) : true)}
                                     on:clicked={(e)=>{updateJavaMcVersions(index, 'min', e.detail.ver)}}
                                 />
                                 <p class="p-1"> - </p>
                                 <MinecraftList
                                     text="To..."
                                     selected={java.minecraft_versions?.max} 
-                                    dateFilter={(v)=>(new Date(v.releaseTime) > new Date(java.minecraft_versions?.min.releaseTime ?? 0))}
+                                    dateFilter={(v)=>(new Date(v.releaseTime) > new Date(java.minecraft_versions?.min?.releaseTime ?? 0))}
                                     on:clicked={(e)=>{updateJavaMcVersions(index, 'max', e.detail.ver)}}
                                 />
                             </div>

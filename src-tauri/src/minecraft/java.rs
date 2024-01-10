@@ -18,8 +18,8 @@ pub struct JavaDetails {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JavaMCRange {
-    min: MCVersionDetails,
-    max: MCVersionDetails
+    min: Option<MCVersionDetails>,
+    max: Option<MCVersionDetails>
 }
 
 #[tauri::command(async)]

@@ -52,8 +52,8 @@
  *  label: String,
  *  version: String,
  *  minecraft_versions: {
- *      min: MCVersion,
- *      max: MCVersion
+ *      min: MCVersion | null,
+ *      max: MCVersion | null
  *  },
  *  xmx: Number,
  *  xms: Number,

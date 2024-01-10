@@ -1,8 +1,6 @@
 import { invoke } from "@tauri-apps/api"
-import { getSetting } from "./settings"
-import { emit, listen } from "@tauri-apps/api/event"
+import { listen } from "@tauri-apps/api/event"
 import { convertFileSrc } from "@tauri-apps/api/tauri"
-import { join } from "@tauri-apps/api/path"
 import { writable } from "svelte/store"
 import { createNotification, finishNotification } from "./notificationSystem"
 import { getJavaForVersion } from "./javas"
@@ -45,7 +43,7 @@ export async function launchInstance(instance) {
     createNotification(`instance_launch_${id}`, `Launching '${name}'...`)
     getJavaForVersion(mc_version).then(async (java) => {
         console.log(`Using java path: ${java.path}, with args ${java.args}`)
-        const unlisten = await listen(`notification_${id}_status`, event => {
+        const unlisten = await listen(`${id}_status`, event => {
             console.warn(event)
             finishNotification(`instance_launch_${id}`, event.payload.text, event.payload.status)
         })

@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use log::warn;
 use serde::{Serialize, Deserialize};
 use tokio::fs;
 
@@ -13,13 +14,13 @@ pub struct MMCConfig {
     pub name: String,
     #[serde(rename = "lastLaunchTime")]
     pub last_played: Option<i64>,
-    pub icon_key: String
+    pub icon_key: Option<String>
 }
 
 impl MMCConfig {
     pub async fn get(path: &Path) -> IResult<Self> {
         let instance_file = fs::read_to_string(path.join("instance.cfg")).await.map_err(
-            |err| InstanceGatherError::FileReadFailed(path.to_path_buf(), err)
+            |err| InstanceGatherError::FileReadFailed(path.join("instance.cfg").to_path_buf(), err)
         )?.replace("[General]", ""); // Remove the section if there is one
 
         serde_ini::from_str(&instance_file).map_err(
@@ -28,7 +29,7 @@ impl MMCConfig {
     }
 
     pub fn check_icon(icon_key: &str) -> Option<String> {
-        let internal_icons = vec![
+        let internal_icons = [
             "default", "bee", "brick", "chicken", "creeper", "diamond", "dirt", "enderman", "enderpearl", "flame", "fox", "gear", "herobrine",
             "gold", "grass", "iron", "magitech", "meat", "modrinth", "netherstar", "planks", "prismlauncher", "squarecreeper", "steve", 
             "stone", "tnt", "bee_legacy", "brick_legacy", "chicken_legacy", "creeper_legacy", "diamond_legacy", "dirt_legacy",
@@ -56,7 +57,7 @@ pub struct MMCPack {
 #[allow(dead_code)]
 #[serde(rename_all = "camelCase")]
 pub struct MMCPackComponent {
-    pub cached_name: String,
+    pub cached_name: Option<String>,
     pub cached_version: Option<String>,
     pub dependency_only: Option<bool>,
     pub uid: String,
@@ -71,7 +72,7 @@ impl MMCPack {
         )?;
 
         serde_json::from_slice(&pack_file).map_err(
-            |err| InstanceGatherError::ParseFailed(path, err)
+            |err| InstanceGatherError::ParseFailedJson(InstanceType::MultiMC, path, err)
         )
     }
 }
@@ -84,13 +85,22 @@ pub struct MMCMetadata {
 
 impl MMCMetadata {
     pub async fn get(instance_path: &Path) -> IResult<Self> {
-        let file = fs::read(instance_path.join(META_FILENAME)).await.map_err(
-            |err| InstanceGatherError::FileReadFailed(instance_path.to_path_buf(), err)
-        )?;
+        let path = instance_path.join(META_FILENAME);
 
-        match serde_json::from_slice(&file) {
-            Ok(parsed) => Ok(parsed),
-            Err(_) => Ok(Self::generate(instance_path).await?),
+        match fs::read(&path).await {
+            Ok(contents) => {
+                match serde_json::from_slice(&contents) {
+                    Ok(parsed) => Ok(parsed),
+                    Err(err) => {
+                        warn!("{}", InstanceGatherError::ParseFailedMeta(path, err));
+                        Ok(Self::generate(instance_path).await?)
+                    },
+                }
+            },
+            Err(err) => {
+                warn!("{}", InstanceGatherError::FileReadFailed(path, err));
+                Self::generate(instance_path).await
+            },
         }
     }
 
@@ -101,7 +111,7 @@ impl MMCMetadata {
             instance_id: fastrand::u32(..),
         };
 
-        fs::write(&path, serde_json::to_string_pretty(&meta).unwrap()).await.map_err(
+        fs::write(&path, serde_json::to_string_pretty(&meta).unwrap(/* this cannot fail */)).await.map_err(
             |err| InstanceGatherError::FileWriteFailed(path, err)
         )?;
 

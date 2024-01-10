@@ -7,6 +7,7 @@
 use std::{fs::{self, create_dir_all}, path::{Path, PathBuf}, io::Cursor};
 use log::debug;
 use reqwest::Client;
+use serde::Serialize;
 use sha1_smol::Sha1;
 use simple_logger::SimpleLogger;
 use tauri::{AppHandle, Manager, api::path::{data_dir, config_dir}};
@@ -44,23 +45,10 @@ pub mod configuration {
 
 
 
-#[derive(serde::Serialize, Clone)]
-struct Notification {
-    status: NotificationState,
-    text: String
-}
-#[derive(serde::Serialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub enum NotificationState {
-    Running,
-    Error,
-    Success
-}
-
-
 fn main() {
     SimpleLogger::new()
         .with_level(log::LevelFilter::Debug)
+        .env()
         .init()
         .expect("Failed to initialize logger!");
 
@@ -93,12 +81,6 @@ fn file_exists(path: String) -> bool {
     Path::new(&path).exists()
 }
 
-pub fn notify(app_handle: &AppHandle, name: &str, text: &str, status: NotificationState) {
-    app_handle.emit_all(
-        &format!("notification_{name}"),
-        Notification { text: text.to_string(), status }
-    ).unwrap()
-}
 
 /// Checks if the checksum of the file at `path` matches `checksum` and downloads it from `url` if not.
 pub async fn download_file_checked(client: &Client, checksum: Option<&String>, path: &PathBuf, url: &String) {
@@ -146,7 +128,51 @@ pub fn maven_identifier_to_path(identifier: &str) -> String {
     format!("{path}/{raw_name}/{version_path}/{raw_name}-{version}.{extension}")
 }
 
+#[derive(Debug, Clone)]
+pub struct Notifier {
+    notif_id: String,
+    app_handle: AppHandle
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct Notif {
+    pub text: String,
+    pub progress: u32,
+    pub max_progress: u32,
+    pub status: NotificationState
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum NotificationState {
+    Running,
+    Error,
+    Success
+}
+
+impl Notifier {
+    pub fn notify_status(&self, contents: Notif) {
+        self.app_handle.emit_all(&self.notif_id, contents).expect("Failed to emit notification!?")
+    }
+
+    pub fn notify(&self, text: &str, status: NotificationState) {
+        self.app_handle.emit_all(&self.notif_id, Notif::new(text, 0, 0, status) ).expect("Failed to emit notification!?")
+    }
+
+    pub fn new(notif_id: &str, app_handle: AppHandle) -> Self {
+        Self { notif_id: notif_id.to_string(), app_handle }
+    }
+}
+
+impl Notif {
+    pub fn new(text: &str, progress: u32, max_progress: u32, status: NotificationState) -> Self {
+        Self { text: text.to_string(), progress, max_progress, status}
+    }
+}
+
+
 pub fn get_classpath_separator() -> String { String::from(if cfg!(windows) { ";" } else { ":" }) }
+
 
 pub fn get_config_dir() -> PathBuf { config_dir().unwrap().join("yamcl") }
 pub fn get_data_dir() -> PathBuf { data_dir().unwrap().join("yamcl") }

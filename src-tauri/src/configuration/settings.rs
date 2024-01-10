@@ -1,5 +1,6 @@
 use std::fs;
 
+use log::warn;
 use serde::{Deserialize, Serialize};
 
 use crate::{minecraft::java::JavaDetails, get_config_dir};
@@ -28,31 +29,45 @@ pub fn update_settings(new_settings: AppSettings) {
 
 impl AppSettings {
     pub fn get() -> Self {
-        let defaults = AppSettings {
-            instance_size: 16,
-            instance_path: None,
-            icon_path: None,
-            java_settings: Vec::new(),
-        };
-        
         let path = get_config_dir().join(SETTINGS_FILE_NAME);
+
         if !path.is_file() {
-            if let Some(parent) = path.parent() {
-                if !parent.exists() {
-                    fs::create_dir_all(parent).expect("Failed to create config directory!");
-                }
-            }
-            fs::write(path, serde_json::to_string_pretty(&defaults).unwrap()).expect("Failed to write to settings file!");
-            return defaults
+            Self::generate();
         }
 
         let file = fs::read_to_string(path).expect("Failed to read settings file!");
-        serde_json::from_str(&file).expect("Failed to parse settings!")
+        match serde_json::from_str(&file) {
+            Ok(settings) => settings,
+            Err(err) => {
+                warn!("Failed to parse settings: {err}, resetting them!");
+                Self::generate()
+            },
+        }
     }
 
     pub fn set(self) {
         let path = get_config_dir().join(SETTINGS_FILE_NAME);
 
         fs::write(path, serde_json::to_string_pretty(&self).unwrap()).expect("Failed to write to settings file!");
+    }
+
+    fn generate() -> Self {
+        let path = get_config_dir().join(SETTINGS_FILE_NAME);
+
+        let defaults = AppSettings {
+            instance_size: 16,
+            instance_path: None,
+            icon_path: None,
+            java_settings: Vec::new(),
+        };
+
+        if let Some(parent) = path.parent() {
+            if !parent.exists() {
+                fs::create_dir_all(parent).expect("Failed to create config directory!");
+            }
+        }
+
+        fs::write(path, serde_json::to_string_pretty(&defaults).unwrap()).expect("Failed to write to settings file!");
+        defaults
     }
 }

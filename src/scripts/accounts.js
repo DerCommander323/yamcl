@@ -76,7 +76,7 @@ export function loadAccounts() {
         })
 }
 
-listen('notification_login_status', event => {
+listen('login_status', event => {
     // Hacky fixes for my stupid code
     // But hey, it works
     if (event.payload.text.includes('aborted') && !getNotification('login_status').contents.includes('Awaiting')) {

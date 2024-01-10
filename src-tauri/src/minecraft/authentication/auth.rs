@@ -1,10 +1,10 @@
 use afire::{Server, Method, Response, Status};
 use chrono::{Utc, Duration};
-use log::{info, debug, error};
+use log::*;
 use reqwest::Client;
 use serde_json::json;
 use tauri::{AppHandle, async_runtime::block_on};
-use crate::{minecraft::authentication::auth_structs::*, notify, NotificationState, configuration::accounts::{save_new_account, update_account}};
+use crate::{minecraft::authentication::auth_structs::*, NotificationState, configuration::accounts::{save_new_account, update_account}, Notifier};
 
 
 const MS_CLIENT_ID: &str = "5431ff2d-20f8-415b-aa2f-5218eba055ea"; // The Yet Another MC Launcher client_id. If you fork this project, please make sure to use your own!
@@ -57,31 +57,31 @@ pub async fn add_account(app_handle: AppHandle) {
     .center()
     .focused(true)
     .build()
-    .unwrap();
+    .expect("Failed to create login window!");
 
-    notify(&app_handle, "login_status", "Awaiting login", NotificationState::Running);
+    let notifier = Notifier::new("login_status", app_handle);
 
-    std::thread::spawn(move || {
-        let app_handle_clone = app_handle.clone();
+    notifier.notify("Awaiting login", NotificationState::Running);
+    tokio::task::spawn_blocking(move || {
+        let notifier_clone = notifier.clone();
         login_window.on_window_event(move |event| {
             if let tauri::WindowEvent::Destroyed = event {
-                notify(&app_handle_clone, "login_status", "Login aborted!", NotificationState::Error);
+                notifier_clone.notify("Login aborted!", NotificationState::Error);
             }
         });
 
-        let app_handle_clone = app_handle.clone();
         redirect_server.route(Method::GET, "/", move |req| {
             if let Some(code) = req.query.get("code") {
                 info!("Code obtained!");
-                notify(&app_handle, "login_status", "Beginning login process...", NotificationState::Running);
+                notifier.notify("Beginning login process...", NotificationState::Running);
                 login_window.close().unwrap();
-                block_on(add_account_code(code, &app_handle_clone));
+                block_on(add_account_code(code, &notifier));
                 Response::new()
                     .text("You may close this window now.")
                     .status(Status::Ok)
             } else {
                 error!("Getting Code failed!");
-                notify(&app_handle_clone, "login_status", "Failed getting code from response!", NotificationState::Error);
+                notifier.notify("Failed getting code from response!", NotificationState::Error);
                 Response::new()
                     .text("Failed to get the authentication code!")
                     .status(Status::NotFound)
@@ -92,42 +92,42 @@ pub async fn add_account(app_handle: AppHandle) {
         if let Err(e) = redirect_server.start() {
             error!("Starting redirect server failed: {e}")
         };
-    });
+    }).await.unwrap();
 }
 
-async fn add_account_code(code: &str, app_handle: &AppHandle) {
+async fn add_account_code(code: &str, notifier: &Notifier) {
     info!("Started adding new Minecraft account!");
     let client = Client::new();
 
     info!("Getting Microsoft Auth response...");
-    notify(app_handle, "login_status", "Getting Microsoft Auth reponse...", NotificationState::Running);
+    notifier.notify("Getting Microsoft Auth reponse...", NotificationState::Running);
     let msa_response = MSAResponse2::from_code(code, &client).await;
     // trace!("{:#?}", msa_response);
 
     info!("Getting Xbox Live Auth response...");
-    notify(app_handle, "login_status", "Getting Xbox Live Auth reponse...", NotificationState::Running);
+    notifier.notify("Getting Xbox Live Auth reponse...", NotificationState::Running);
     let xbl_response = msa_response.get_xbl_reponse(&client).await;
     // trace!("{:#?}", xbl_response);
 
     info!("Getting Xsts Auth response...");
-    notify(app_handle, "login_status", "Getting Xsts Auth reponse...", NotificationState::Running);
+    notifier.notify("Getting Xsts Auth reponse...", NotificationState::Running);
     let xsts_response = xbl_response.xbl_to_xsts_response(&client).await;
     // trace!("{:#?}", xsts_response);
 
     info!("Getting Minecraft Auth response...");
-    notify(app_handle, "login_status", "Getting Minecraft Auth reponse...", NotificationState::Running);
+    notifier.notify("Getting Minecraft Auth reponse...", NotificationState::Running);
     let mc_response = xsts_response.xsts_to_mc_response(&client).await;
     // trace!("{:#?}", mc_response);
 
     info!("Checking Minecraft ownership...");
-    notify(app_handle, "login_status", "Checking Minecraft ownership...", NotificationState::Running);
+    notifier.notify("Checking Minecraft ownership...", NotificationState::Running);
     if !mc_response.has_mc_ownership(&client).await {
-        notify(&app_handle, "login_status", "Account does not own Minecraft!", NotificationState::Error);
+        notifier.notify("Account does not own Minecraft!", NotificationState::Error);
         return;
     }
 
     info!("Getting Minecraft account...");
-    notify(app_handle, "login_status", "Getting Minecraft account...", NotificationState::Running);
+    notifier.notify("Getting Minecraft account...", NotificationState::Running);
     let mc_profile = mc_response.get_mc_profile(&client).await;
     // trace!("{:#?}", mc_profile);
 
@@ -142,12 +142,12 @@ async fn add_account_code(code: &str, app_handle: &AppHandle) {
 
     // trace!("{:#?}", mc_account);
     info!("Saving new Minecraft account...");
-    notify(app_handle, "login_status", "Saving new account...", NotificationState::Running);
+    notifier.notify("Saving new account...", NotificationState::Running);
     if let Err(e) = save_new_account(mc_account) {
         error!("Error occured while saving new account: {e}")
     }
 
-    notify(app_handle, "login_status", &String::from_iter(["Successfully added account \"", &username, "\"!"]), NotificationState::Success);
+    notifier.notify(&String::from_iter(["Successfully added account \"", &username, "\"!"]), NotificationState::Success);
     info!("Successfully added new account.");
 }
 
